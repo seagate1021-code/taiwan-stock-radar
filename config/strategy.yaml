@@ -35,10 +35,17 @@ setup:
   min_confirmations: 3
   min_daily_change_pct: -4.0
 
+
 tdcc:
   target_period_count: 12
   max_historical_requests_per_run: 11
   noise_pp: 0.05
+
+  scoring:
+    accumulating_points: 15
+    distributing_points: -15
+    stable_points: 0
+    no_data_points: 0
 
 selection:
   min_picks: 3
