@@ -344,6 +344,22 @@ h2, h3 {
 hr {
     border-color: #293b55;
 }
+/* ===== 時間區間選擇器文字 ===== */
+[data-testid="stRadio"] label,
+[data-testid="stRadio"] p {
+    color: #e8eefc !important;
+}
+
+/* ===== 一般文字與圖表上方標題 ===== */
+.stApp [data-testid="stMarkdownContainer"] p {
+    color: #dce7f7;
+}
+
+/* ===== 圖表標題與說明 ===== */
+.stApp h4,
+.stApp h5 {
+    color: #eaf1ff !important;
+}
 </style>
     """,
     unsafe_allow_html=True,
