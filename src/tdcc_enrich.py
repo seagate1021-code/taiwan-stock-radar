@@ -22,6 +22,7 @@ def main():
 
     columns = [
         "stock_id",
+        "date",
         "period_count",
         "big_holder_pct",
         "change_4w_pp",
@@ -43,9 +44,37 @@ def main():
         validate="one_to_one",
     )
 
-    result = result.rename(
-        columns={"trend": "tdcc_trend"}
+        result = result.rename(
+        columns={
+            "date_x": "price_date",
+            "date_y": "tdcc_date",
+            "trend": "tdcc_trend",
+        }
     )
+
+    result["price_date"] = pd.to_datetime(
+        result["price_date"]
+    )
+    result["tdcc_date"] = pd.to_datetime(
+        result["tdcc_date"]
+    )
+
+    future_data = (
+        result["tdcc_date"] > result["price_date"]
+    )
+
+    if future_data.any():
+        print("警告：部分TDCC資料日期晚於股價日期")
+        result.loc[
+            future_data,
+            [
+                "period_count",
+                "big_holder_pct",
+                "change_4w_pp",
+                "change_12w_pp",
+                "tdcc_trend",
+            ],
+        ] = pd.NA
 
     result["tdcc_trend"] = (
         result["tdcc_trend"].fillna("NO_DATA")
