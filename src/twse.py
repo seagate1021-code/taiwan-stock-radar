@@ -1,7 +1,7 @@
 
-import re
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
@@ -28,37 +28,35 @@ def fetch_twse_daily(target_date):
         URL,
         params=params,
         timeout=30,
-        headers={"User-Agent": "TaiwanStockRadar/1.0"},
+        headers={"User-Agent": "Mozilla/5.0"},
     )
     response.raise_for_status()
 
     payload = response.json()
 
-    if payload.get("stat") != "OK":
-        return pd.DataFrame()
-
-    
-fields = payload.get("fields9")
-rows = payload.get("data9")
-
-if not fields or not rows:
     print("TWSE 回傳狀態:", payload.get("stat"))
     print("TWSE 回傳欄位:", list(payload.keys()))
 
-    for key, value in payload.items():
-        if key.startswith("fields"):
-            print(key, ":", value[:8] if isinstance(value, list) else value)
+    if payload.get("stat") != "OK":
+        return pd.DataFrame()
 
-    raise ValueError(
-        "找不到預期的個股行情表，請檢查上方回傳欄位"
-    )
+    fields = payload.get("fields9")
+    rows = payload.get("data9")
 
+    if not fields or not rows:
+        for key, value in payload.items():
+            if key.startswith("fields"):
+                print(key, ":", value)
+
+        raise ValueError("TWSE 回應缺少個股行情表")
 
     df = pd.DataFrame(rows, columns=fields)
 
     required = [
-        "證券代號", "證券名稱",
-        "成交金額", "收盤價",
+        "證券代號",
+        "證券名稱",
+        "成交金額",
+        "收盤價",
     ]
 
     for col in required:
@@ -68,13 +66,14 @@ if not fields or not rows:
     df = df[required].copy()
 
     df.columns = [
-        "stock_id", "stock_name",
-        "trade_value", "close",
+        "stock_id",
+        "stock_name",
+        "trade_value",
+        "close",
     ]
 
     df["stock_id"] = df["stock_id"].astype(str)
 
-    # 暫時只保留四位數證券代號
     df = df[
         df["stock_id"].str.fullmatch(r"[1-9][0-9]{3}")
     ].copy()
@@ -89,13 +88,10 @@ if not fields or not rows:
 
 
 def main():
-    # 以台灣日期為準
-    from zoneinfo import ZoneInfo
-    from datetime import datetime
+    today = datetime.now(
+        ZoneInfo("Asia/Taipei")
+    ).date()
 
-    today = datetime.now(ZoneInfo("Asia/Taipei")).date()
-
-    # 向前尋找最近有資料的交易日
     for offset in range(10):
         target = today - timedelta(days=offset)
         print(f"嘗試取得: {target}")
@@ -107,11 +103,17 @@ def main():
             output.mkdir(parents=True, exist_ok=True)
 
             path = output / "twse_latest.csv"
-            df.to_csv(path, index=False, encoding="utf-8-sig")
+
+            df.to_csv(
+                path,
+                index=False,
+                encoding="utf-8-sig",
+            )
 
             print(f"資料日期: {target}")
             print(f"取得證券數量: {len(df)}")
             print(f"已儲存: {path}")
+
             print(df.head(10).to_string(index=False))
             return
 
