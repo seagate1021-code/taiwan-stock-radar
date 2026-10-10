@@ -59,7 +59,10 @@ jobs:
 
       - name: Build TDCC weekly snapshot
         run: python src/tdcc_snapshot.py
-
+        
+      - name: Check TDCC historical dates
+        run: python src/tdcc_history_check.py
+        
       - name: Upload FIRE top picks
         uses: actions/upload-artifact@v4
         with:
