@@ -87,6 +87,7 @@ jobs:
           cp data/reports/combined_top_picks.csv data/history/combined_top_picks.csv
           cp data/reports/stock_signals.csv data/history/stock_signals.csv
           cp data/reports/tdcc_analysis.csv data/history/tdcc_analysis.csv
+          cp data/reports/technical_indicators.csv data/history/technical_indicators.csv
 
       - name: Save daily combined picks history
         run: python src/picks_history.py
@@ -152,8 +153,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/history/twse_daily.csv data/history/tdcc_weekly.csv data/history/combined_picks_history.csv data/history/combined_top_picks.csv data/history/stock_signals.csv data/history/tdcc_analysis.csv
-         
+          git add data/history/twse_daily.csv data/history/tdcc_weekly.csv data/history/combined_picks_history.csv data/history/combined_top_picks.csv data/history/stock_signals.csv data/history/tdcc_analysis.csv data/history/technical_indicators.csv
           if git diff --cached --quiet; then
             echo "沒有新的歷史資料需要儲存"
           else
