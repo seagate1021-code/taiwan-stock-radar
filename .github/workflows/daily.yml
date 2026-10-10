@@ -35,3 +35,12 @@ jobs:
         with:
           name: twse-market-data
           path: data/reports/twse_latest.csv
+
+      - name: Build TWSE history
+        run: python src/history.py
+
+      - name: Upload history data
+        uses: actions/upload-artifact@v4
+        with:
+          name: twse-history-data
+          path: data/history/twse_daily.csv
