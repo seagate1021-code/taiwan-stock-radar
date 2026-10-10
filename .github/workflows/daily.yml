@@ -26,3 +26,12 @@ jobs:
 
       - name: Run stock radar
         run: python main.py
+
+      - name: Fetch TWSE market data
+        run: python src/twse.py
+
+      - name: Upload market data
+        uses: actions/upload-artifact@v4
+        with:
+          name: twse-market-data
+          path: data/reports/twse_latest.csv
