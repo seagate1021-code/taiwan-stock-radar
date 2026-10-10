@@ -66,6 +66,9 @@ jobs:
       - name: Analyze TDCC 12-week trend
         run: python src/tdcc_analysis.py
         
+      - name: Enrich FIRE picks with TDCC
+        run: python src/tdcc_enrich.py
+        
       - name: Check TDCC historical dates
         run: python src/tdcc_history_check.py
         
