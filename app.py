@@ -73,6 +73,14 @@ def format_number(value, digits=2):
 def show_price_chart(stock_prices):
     stock_prices = stock_prices.sort_values("date").copy()
 
+    period = st.radio(
+        "📅 股價圖時間區間",
+        ["近 1 個月", "近 3 個月", "近 6 個月", "近 1 年", "全部"],
+        index=2,
+        horizontal=True,
+        key="price_chart_period",
+    )
+
     has_ohlc = all(
         column in stock_prices.columns
         for column in ["open", "high", "low", "close"]
