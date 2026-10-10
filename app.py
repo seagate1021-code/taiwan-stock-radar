@@ -261,6 +261,101 @@ with tab1:
 with tab2:
     st.subheader(f"股票代號：{stock_id}")
 
+    # ===== FIRE + TDCC 個股綜合分析 =====
+    st.subheader("🎯 FIRE + TDCC 綜合分析")
+
+    def latest_stock_row(df, code):
+        if df.empty or "stock_id" not in df.columns:
+            return None
+
+        rows = df[
+            df["stock_id"].astype(str).str.strip()
+            == str(code).strip()
+        ].copy()
+
+        if rows.empty:
+            return None
+
+        if "date" in rows.columns:
+            rows["date"] = pd.to_datetime(
+                rows["date"], errors="coerce"
+            )
+            rows = rows.sort_values(
+                "date", ascending=False
+            )
+
+        return rows.iloc[0]
+
+    fire_row = latest_stock_row(signals, stock_id)
+    tdcc_row = latest_stock_row(tdcc, stock_id)
+
+    if fire_row is None and tdcc_row is None:
+        st.info("目前沒有此股票的 FIRE 或 TDCC 分析資料。")
+    else:
+        fire_signal = "無資料"
+        fire_score = "—"
+        tdcc_direction = "無資料"
+
+        if fire_row is not None:
+            raw_signal = fire_row.get("signal")
+            if pd.notna(raw_signal):
+                fire_signal = str(raw_signal).strip()
+
+            score = pd.to_numeric(
+                fire_row.get("rank_score"),
+                errors="coerce"
+            )
+            if pd.notna(score):
+                fire_score = f"{score:.2f}"
+
+        if tdcc_row is not None:
+            raw_trend = tdcc_row.get("trend")
+            trend = (
+                str(raw_trend).strip().upper()
+                if pd.notna(raw_trend)
+                else ""
+            )
+
+            tdcc_direction = {
+                "ACCUMULATING": "大戶增持",
+                "DISTRIBUTING": "大戶減持",
+                "NEUTRAL": "籌碼持平",
+            }.get(trend, trend or "無資料")
+
+        c1, c2, c3 = st.columns(3)
+
+        c1.metric("FIRE 技術訊號", fire_signal)
+        c2.metric("技術排名分數", fire_score)
+        c3.metric("TDCC 籌碼方向", tdcc_direction)
+
+        if fire_row is None or tdcc_row is None:
+            interpretation = "資料不足，暫無法綜合判讀"
+        elif (
+            fire_signal.upper() == "FIRE"
+            and tdcc_direction == "大戶增持"
+        ):
+            interpretation = "🔥 FIRE 訊號與大戶增持同向"
+        elif (
+            fire_signal.upper() == "FIRE"
+            and tdcc_direction == "大戶減持"
+        ):
+            interpretation = "⚠️ FIRE 訊號與大戶籌碼分歧"
+        elif tdcc_direction == "大戶增持":
+            interpretation = "📈 大戶增持，技術訊號尚未達 FIRE"
+        elif tdcc_direction == "大戶減持":
+            interpretation = "📉 大戶減持，留意籌碼變化"
+        else:
+            interpretation = "技術與籌碼方向尚不明確"
+
+        st.info(f"**綜合判讀：{interpretation}**")
+
+        st.caption(
+            "此為規則式技術與籌碼訊號整理，"
+            "並非股價預測或買賣建議。"
+        )
+
+    st.divider()
+
     # ===== 個股 FIRE 技術訊號 =====
     st.subheader("🔥 FIRE 技術訊號分析")
 
