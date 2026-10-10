@@ -80,13 +80,13 @@ jobs:
         
       - name: Rank all FIRE candidates with TDCC
         run: python src/combined_top_picks.py
-
+        
       - name: Copy dashboard data
         run: |
           mkdir -p data/history
           cp data/reports/combined_top_picks.csv data/history/combined_top_picks.csv
           cp data/reports/stock_signals.csv data/history/stock_signals.csv
-
+          cp data/reports/tdcc_analysis.csv data/history/tdcc_analysis.csv
 
       - name: Save daily combined picks history
         run: python src/picks_history.py
@@ -152,7 +152,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/history/twse_daily.csv data/history/tdcc_weekly.csv data/history/combined_picks_history.csv data/history/combined_top_picks.csv data/history/stock_signals.csv
+          git add data/history/twse_daily.csv data/history/tdcc_weekly.csv data/history/combined_picks_history.csv data/history/combined_top_picks.csv data/history/stock_signals.csv data/history/tdcc_analysis.csv
          
           if git diff --cached --quiet; then
             echo "沒有新的歷史資料需要儲存"
