@@ -43,7 +43,7 @@ jobs:
         run: python src/backfill_volume.py
         
       - name: Run basic stock screener
-        run: python src/basic_screen.py
+        run: python src/screener.py
         
       - name: Calculate technical indicators
         run: python src/indicators.py
