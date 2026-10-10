@@ -259,6 +259,114 @@ with tab1:
 with tab2:
     st.subheader(f"股票代號：{stock_id}")
 
+    # ===== 個股 FIRE 技術訊號 =====
+    st.subheader("🔥 FIRE 技術訊號分析")
+
+    if signals.empty:
+        st.info("目前尚無技術訊號資料。")
+    elif not stock_id:
+        st.info("請先輸入股票代號。")
+    else:
+        stock_signals = signals[
+            signals["stock_id"].astype(str).str.strip()
+            == str(stock_id).strip()
+        ].copy()
+
+        if stock_signals.empty:
+            st.info("此股票目前沒有技術訊號資料。")
+        else:
+            stock_signals["date"] = pd.to_datetime(
+                stock_signals["date"], errors="coerce"
+            )
+            stock_signals = stock_signals.sort_values(
+                "date", ascending=False
+            )
+
+            latest = stock_signals.iloc[0]
+
+            def signal_text(value):
+                if pd.isna(value):
+                    return "—"
+                return str(value)
+
+            def signal_number(value, digits=2):
+                number = pd.to_numeric(value, errors="coerce")
+                if pd.isna(number):
+                    return "—"
+                return f"{number:.{digits}f}"
+
+            st.caption(
+                f"股票：{signal_text(latest['stock_name'])} "
+                f"({stock_id})｜"
+                f"資料日期：{latest['date'].strftime('%Y-%m-%d')}"
+            )
+
+            c1, c2, c3, c4 = st.columns(4)
+
+            c1.metric(
+                "最新訊號",
+                signal_text(latest["signal"])
+            )
+            c2.metric(
+                "選股排名分數",
+                signal_number(latest["rank_score"])
+            )
+            c3.metric(
+                "RSI (14)",
+                signal_number(latest["rsi14"])
+            )
+            c4.metric(
+                "成交量倍數",
+                signal_number(latest["volume_ratio"]) + " 倍"
+            )
+
+            c5, c6, c7, c8 = st.columns(4)
+
+            c5.metric(
+                "接近近期高點",
+                signal_number(latest["near_high_pct"]) + "%"
+            )
+            c6.metric(
+                "相對 MA10",
+                signal_number(latest["price_vs_ma10_pct"]) + "%"
+            )
+            c7.metric(
+                "相對 MA20",
+                signal_number(latest["price_vs_ma20_pct"]) + "%"
+            )
+            c8.metric(
+                "熱門標記",
+                signal_text(latest["hot_flag"])
+            )
+
+            st.write("**訊號確認條件**")
+            st.write(
+                "FIRE：",
+                signal_text(latest["fire_confirmations"])
+            )
+            st.write(
+                "SETUP：",
+                signal_text(latest["setup_confirmations"])
+            )
+
+            with st.expander("查看此股票的歷史技術訊號"):
+                st.dataframe(
+                    stock_signals[
+                        [
+                            "date",
+                            "close",
+                            "signal",
+                            "rsi14",
+                            "volume_ratio",
+                            "rank_score",
+                        ]
+                    ],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+    st.divider()
+
     if prices.empty:
         st.warning("歷史股價資料尚未準備好。")
     else:
