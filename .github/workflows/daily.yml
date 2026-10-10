@@ -41,7 +41,10 @@ jobs:
 
       - name: Backfill historical volume
         run: python src/backfill_volume.py
-
+        
+      - name: Run basic stock screener
+        run: python src/basic_screen.py
+        
       - name: Calculate technical indicators
         run: python src/indicators.py
 
@@ -59,9 +62,6 @@ jobs:
         with:
           name: technical-indicators
           path: data/reports/technical_indicators.csv
-
-      - name: Run basic stock screener
-        run: python src/screener.py
 
       - name: Upload screening results
         uses: actions/upload-artifact@v4
