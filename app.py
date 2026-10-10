@@ -80,7 +80,25 @@ def show_price_chart(stock_prices):
         horizontal=True,
         key="price_chart_period",
     )
+    stock_prices["date"] = pd.to_datetime(
+        stock_prices["date"], errors="coerce"
+    )
+    stock_prices = stock_prices.dropna(subset=["date"])
 
+    period_days = {
+        "近 1 個月": 30,
+        "近 3 個月": 90,
+        "近 6 個月": 180,
+        "近 1 年": 365,
+    }
+
+    if period != "全部" and not stock_prices.empty:
+        latest_date = stock_prices["date"].max()
+        start_date = latest_date - pd.Timedelta(
+            days=period_days[period]
+        )
+    else:
+        start_date = None
     has_ohlc = all(
         column in stock_prices.columns
         for column in ["open", "high", "low", "close"]
@@ -147,9 +165,15 @@ def show_price_chart(stock_prices):
         yaxis_title="價格（元）",
         legend=dict(orientation="h", y=1.12),
     )
-
+    
+    if start_date is not None:
+        fig.update_xaxes(
+            range=[
+                start_date,
+                stock_prices["date"].max(),
+            ]
+        )
     st.plotly_chart(fig, use_container_width=True)
-
 
 st.markdown(
     """
