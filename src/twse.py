@@ -71,11 +71,11 @@ def fetch_twse_daily(target_date):
         )
 
     df = pd.DataFrame(rows, columns=fields)
-
-
+    
     required = [
         "證券代號",
         "證券名稱",
+        "成交股數",
         "成交金額",
         "收盤價",
     ]
@@ -86,9 +86,10 @@ def fetch_twse_daily(target_date):
 
     df = df[required].copy()
 
-    df.columns = [
+        df.columns = [
         "stock_id",
         "stock_name",
+        "volume",
         "trade_value",
         "close",
     ]
@@ -98,11 +99,16 @@ def fetch_twse_daily(target_date):
     df = df[
         df["stock_id"].str.fullmatch(r"[1-9][0-9]{3}")
     ].copy()
-
+    
+    df["volume"] = df["volume"].map(to_number)
     df["trade_value"] = df["trade_value"].map(to_number)
     df["close"] = df["close"].map(to_number)
 
-    df = df.dropna(subset=["close", "trade_value"])
+    
+    df = df.dropna(
+        subset=["close", "trade_value", "volume"]
+    )
+
     df["date"] = target_date.isoformat()
 
     return df
