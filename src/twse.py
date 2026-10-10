@@ -84,9 +84,10 @@ def fetch_twse_daily(target_date):
         if col not in df.columns:
             raise ValueError(f"缺少欄位: {col}")
 
+   
     df = df[required].copy()
 
-        df.columns = [
+    df.columns = [
         "stock_id",
         "stock_name",
         "volume",
@@ -99,12 +100,11 @@ def fetch_twse_daily(target_date):
     df = df[
         df["stock_id"].str.fullmatch(r"[1-9][0-9]{3}")
     ].copy()
-    
+
     df["volume"] = df["volume"].map(to_number)
     df["trade_value"] = df["trade_value"].map(to_number)
     df["close"] = df["close"].map(to_number)
 
-    
     df = df.dropna(
         subset=["close", "trade_value", "volume"]
     )
