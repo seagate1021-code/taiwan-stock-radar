@@ -17,7 +17,7 @@ HISTORY_PATH = Path("data/history/twse_daily.csv")
 PICKS_PATH = Path("data/history/combined_top_picks.csv")
 PICKS_HISTORY_PATH = Path("data/history/combined_picks_history.csv")
 INDICATORS_PATH = Path("data/reports/technical_indicators.csv")
-TDCC_PATH = Path("data/reports/tdcc_analysis.csv")
+TDCC_PATH = Path("data/history/tdcc_analysis.csv")
 SIGNALS_PATH = Path("data/history/stock_signals.csv")
 
 
