@@ -72,6 +72,21 @@ def calculate_one_stock(group):
         20, min_periods=20
     ).max()
 
+    # 前20個交易日最高收盤價，不包含當日
+    group["previous_high_close_20"] = (
+        close.shift(1)
+        .rolling(20, min_periods=20)
+        .max()
+    )
+
+    # 當日收盤價相對前20日高點的距離
+    group["breakout_distance_pct"] = (
+        (
+            close / group["previous_high_close_20"]
+            - 1
+        ) * 100
+    )
+
     group["near_high_pct"] = (
         (close / group["high_close_20"] - 1) * 100
     )
