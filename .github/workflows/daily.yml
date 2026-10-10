@@ -62,6 +62,9 @@ jobs:
         
       - name: Backfill TDCC history
         run: python src/tdcc_backfill.py
+
+      - name: Analyze TDCC 12-week trend
+        run: python src/tdcc_analysis.py
         
       - name: Check TDCC historical dates
         run: python src/tdcc_history_check.py
