@@ -174,6 +174,7 @@ def main():
         result["date"] == latest_date
     ].copy()
 
+    
     indicator_columns = [
         "ma10",
         "ma20",
@@ -181,14 +182,14 @@ def main():
         "avg_volume_20",
         "volume_ratio",
         "high_close_20",
-        "breakout_status",
+        "previous_high_close_20",
         "breakout_distance_pct",
         "near_high_pct",
         "price_vs_ma10_pct",
         "price_vs_ma20_pct",
         "daily_change_pct",
     ]
-
+    
     latest = latest.dropna(subset=indicator_columns)
 
     columns = [
