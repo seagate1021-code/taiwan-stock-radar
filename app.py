@@ -434,6 +434,76 @@ with tab2:
                 trend_label
             )
 
+            # ===== TDCC 4 週 / 12 週籌碼變化比較 =====
+            st.markdown("#### 📊 大戶籌碼變化比較")
+
+            change_4w = pd.to_numeric(
+                latest_tdcc["change_4w_pp"],
+                errors="coerce"
+            )
+            change_12w = pd.to_numeric(
+                latest_tdcc["change_12w_pp"],
+                errors="coerce"
+            )
+
+            if pd.notna(change_4w) or pd.notna(change_12w):
+                import plotly.graph_objects as go
+
+                labels = []
+                values = []
+                colors = []
+
+                for label, value in [
+                    ("近 4 週", change_4w),
+                    ("近 12 週", change_12w),
+                ]:
+                    if pd.notna(value):
+                        labels.append(label)
+                        values.append(float(value))
+                        colors.append(
+                            "#22C55E" if value >= 0 else "#EF4444"
+                        )
+
+                fig_change = go.Figure(
+                    go.Bar(
+                        x=labels,
+                        y=values,
+                        marker_color=colors,
+                        text=[f"{v:+.2f}" for v in values],
+                        textposition="outside",
+                        hovertemplate=(
+                            "%{x}<br>持股比例變化："
+                            "%{y:+.2f} 百分點"
+                            "<extra></extra>"
+                        ),
+                    )
+                )
+
+                fig_change.update_layout(
+                    template="plotly_dark",
+                    paper_bgcolor="#0B1220",
+                    plot_bgcolor="#0B1220",
+                    font=dict(color="#E2E8F0"),
+                    height=320,
+                    margin=dict(l=30, r=20, t=30, b=30),
+                    xaxis_title="比較期間",
+                    yaxis_title="持股比例變化（百分點）",
+                    showlegend=False,
+                )
+
+                fig_change.add_hline(
+                    y=0,
+                    line_color="#94A3B8",
+                    line_width=1,
+                )
+
+                st.plotly_chart(
+                    fig_change,
+                    use_container_width=True,
+                )
+            else:
+                st.info("目前沒有足夠資料比較籌碼變化。")
+
             st.caption(
                 "分析期間筆數："
                 + str(latest_tdcc["period_count"])
