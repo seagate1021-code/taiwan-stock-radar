@@ -832,53 +832,6 @@ with tab2:
     else:
         st.info("技術指標報表尚未準備好。")
 
-    st.markdown("### FIRE + TDCC 綜合分析")
-
-    if not picks.empty and "stock_id" in picks.columns:
-        matched = picks[
-            picks["stock_id"].astype(str) == stock_id
-        ]
-
-        if not matched.empty:
-            item = matched.iloc[0]
-            c1, c2, c3 = st.columns(3)
-
-            c1.metric(
-                "FIRE 分數",
-                format_number(item.get("fire_score")),
-            )
-            c2.metric(
-                "TDCC 分數",
-                format_number(item.get("tdcc_score"), 0),
-            )
-            c3.metric(
-                "綜合分數",
-                format_number(item.get("combined_score")),
-            )
-
-            st.success(
-                "突破狀態："
-                + str(item.get("breakout_status", "—"))
-                + "｜大戶趨勢："
-                + str(item.get("tdcc_trend", "—"))
-            )
-        
-        else:
-            pass
-
-    if not tdcc.empty and "stock_id" in tdcc.columns:
-        matched_tdcc = tdcc[
-            tdcc["stock_id"].astype(str) == stock_id
-        ]
-
-        if not matched_tdcc.empty:
-            st.markdown("### TDCC 大戶籌碼資料")
-            st.dataframe(
-                matched_tdcc.tail(1),
-                use_container_width=True,
-                hide_index=True,
-            )
-
 with tab3:
     st.subheader("每日綜合選股歷史紀錄")
 
