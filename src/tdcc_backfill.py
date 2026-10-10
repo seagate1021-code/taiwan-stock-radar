@@ -134,11 +134,11 @@ def main():
 
     existing_dates = set(history["date"].unique())
 
-    # 以現有最新資料日期為基準，往前尋找
-    latest = date.fromisoformat(max(existing_dates))
+    # 從目前最早的歷史日期繼續往前回補
+    earliest = date.fromisoformat(min(existing_dates))
 
-    # 從最新日期前一天開始，避免覆蓋官方資料
-    cursor = latest - timedelta(days=1)
+    # 避免重複搜尋已保存的日期
+    cursor = earliest - timedelta(days=1)
 
     downloaded = []
     requests_used = 0
