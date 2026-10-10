@@ -77,6 +77,16 @@ jobs:
         
       - name: Calculate FIRE TDCC combined ranking
         run: python src/combined_ranking.py
+        
+      - name: Rank all FIRE candidates with TDCC
+        run: python src/combined_top_picks.py
+
+      - name: Upload full FIRE TDCC top picks
+        uses: actions/upload-artifact@v4
+        with:
+          name: fire-tdcc-full-top-picks
+          path: data/reports/combined_top_picks.csv
+          if-no-files-found: error
 
       - name: Upload FIRE TDCC combined ranking
         uses: actions/upload-artifact@v4
