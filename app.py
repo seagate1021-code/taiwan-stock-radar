@@ -18,6 +18,7 @@ PICKS_PATH = Path("data/history/combined_top_picks.csv")
 PICKS_HISTORY_PATH = Path("data/history/combined_picks_history.csv")
 INDICATORS_PATH = Path("data/reports/technical_indicators.csv")
 TDCC_PATH = Path("data/history/tdcc_analysis.csv")
+TDCC_WEEKLY_PATH = Path("data/history/tdcc_weekly.csv")
 SIGNALS_PATH = Path("data/history/stock_signals.csv")
 
 
@@ -171,6 +172,7 @@ picks = read_csv(PICKS_PATH)
 picks_history = read_csv(PICKS_HISTORY_PATH)
 indicators = read_csv(INDICATORS_PATH)
 tdcc = read_csv(TDCC_PATH)
+tdcc_weekly = read_csv(TDCC_WEEKLY_PATH)
 signals = read_csv(SIGNALS_PATH)
 
 if not picks.empty and "combined_rank" in picks.columns:
@@ -437,63 +439,100 @@ with tab2:
                 + str(latest_tdcc["period_count"])
             )
 
-            # ===== TDCC 籌碼變化趨勢圖 =====
-            st.markdown("#### 📈 TDCC 籌碼變化趨勢")
+           
+            # ===== TDCC 每週大戶持股趨勢圖 =====
+            st.markdown("#### 📈 TDCC 每週大戶持股趨勢")
 
-            chart_tdcc = stock_tdcc.copy()
-            chart_tdcc = chart_tdcc.dropna(subset=["date"])
-            chart_tdcc = chart_tdcc.sort_values("date")
-
-            for col in [
-                "big_holder_pct",
-                "change_4w_pp",
-                "change_12w_pp",
-            ]:
-                chart_tdcc[col] = pd.to_numeric(
-                    chart_tdcc[col], errors="coerce"
-                )
-
-            if chart_tdcc["big_holder_pct"].notna().any():
-                import plotly.graph_objects as go
-
-                fig_tdcc = go.Figure()
-
-                fig_tdcc.add_trace(
-                    go.Scatter(
-                        x=chart_tdcc["date"],
-                        y=chart_tdcc["big_holder_pct"],
-                        mode="lines+markers",
-                        name="大戶持股比例",
-                        line=dict(color="#38BDF8", width=3),
-                        marker=dict(size=6),
-                        hovertemplate=(
-                            "日期：%{x|%Y-%m-%d}"
-                            "<br>大戶持股：%{y:.2f}%"
-                            "<extra></extra>"
-                        ),
-                    )
-                )
-
-                fig_tdcc.update_layout(
-                    template="plotly_dark",
-                    height=350,
-                    margin=dict(l=20, r=20, t=30, b=20),
-                    xaxis_title="資料日期",
-                    yaxis_title="大戶持股比例 (%)",
-                    hovermode="x unified",
-                )
-
-                st.plotly_chart(
-                    fig_tdcc,
-                    use_container_width=True,
-                )
+            if tdcc_weekly.empty:
+                st.info("目前尚無 TDCC 每週歷史資料。")
             else:
-                st.info("目前沒有可繪製的大戶持股比例資料。")
+                weekly_stock = tdcc_weekly[
+                    tdcc_weekly["stock_id"].astype(str).str.strip()
+                    == str(stock_id).strip()
+                ].copy()
 
-            st.caption(
-                "圖表使用已保存的 TDCC 分析資料；"
-                "若只有一筆資料，會只顯示一個資料點。"
-            )
+                if weekly_stock.empty:
+                    st.info("此股票目前沒有 TDCC 每週歷史資料。")
+                else:
+                    weekly_stock["date"] = pd.to_datetime(
+                        weekly_stock["date"], errors="coerce"
+                    )
+                    weekly_stock["big_holder_pct"] = pd.to_numeric(
+                        weekly_stock["big_holder_pct"],
+                        errors="coerce"
+                    )
+
+                    weekly_stock = weekly_stock.dropna(
+                        subset=["date", "big_holder_pct"]
+                    )
+                    weekly_stock = weekly_stock.sort_values("date")
+                    weekly_stock = weekly_stock.drop_duplicates(
+                        subset=["date"], keep="last"
+                    )
+
+                    if weekly_stock.empty:
+                        st.info("目前沒有可繪製的 TDCC 歷史資料。")
+                    else:
+                        import plotly.graph_objects as go
+
+                        fig_tdcc = go.Figure()
+
+                        fig_tdcc.add_trace(
+                            go.Scatter(
+                                x=weekly_stock["date"],
+                                y=weekly_stock["big_holder_pct"],
+                                mode="lines+markers",
+                                name="大戶持股比例",
+                                line=dict(
+                                    color="#38BDF8",
+                                    width=3
+                                ),
+                                marker=dict(size=6),
+                                hovertemplate=(
+                                    "日期：%{x|%Y-%m-%d}"
+                                    "<br>大戶持股：%{y:.2f}%"
+                                    "<extra></extra>"
+                                ),
+                            )
+                        )
+
+                        fig_tdcc.update_layout(
+                            template="plotly_dark",
+                            paper_bgcolor="#0B1220",
+                            plot_bgcolor="#0B1220",
+                            font=dict(color="#E2E8F0"),
+                            height=380,
+                            margin=dict(
+                                l=20, r=20, t=30, b=20
+                            ),
+                            xaxis=dict(
+                                title="資料日期",
+                                tickformat="%Y-%m-%d",
+                                showgrid=True,
+                                gridcolor="#243247",
+                            ),
+                            yaxis=dict(
+                                title="大戶持股比例 (%)",
+                                ticksuffix="%",
+                                showgrid=True,
+                                gridcolor="#243247",
+                            ),
+                            hovermode="x unified",
+                        )
+
+                        st.plotly_chart(
+                            fig_tdcc,
+                            use_container_width=True,
+                        )
+
+                        st.caption(
+                            f"共 {len(weekly_stock)} 週資料｜"
+                            f"期間："
+                            f"{weekly_stock['date'].min():%Y-%m-%d}"
+                            f" ～ "
+                            f"{weekly_stock['date'].max():%Y-%m-%d}"
+                        )
+
 
             with st.expander("查看 TDCC 分析資料"):
                 st.dataframe(
