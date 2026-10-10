@@ -102,6 +102,36 @@ def main():
 
     fire["hot_flag"] = fire["hot_flag"].fillna("")
 
+    # 讀取最新技術指標中的突破基準
+    indicators = pd.read_csv(
+        "data/reports/technical_indicators.csv",
+        dtype={"stock_id": str},
+    )
+
+    required = [
+        "stock_id",
+        "date",
+        "previous_high_close_20",
+        "breakout_distance_pct",
+    ]
+
+    missing = [
+        col for col in required
+        if col not in indicators.columns
+    ]
+
+    if missing:
+        raise ValueError(
+            f"技術指標缺少突破欄位: {missing}"
+        )
+
+    fire = fire.merge(
+        indicators[required],
+        on=["stock_id", "date"],
+        how="left",
+        validate="one_to_one",
+    )
+
     numeric_cols = [
         "fire_confirmations",
         "volume_ratio",
@@ -117,17 +147,78 @@ def main():
 
     fire = fire.dropna(subset=numeric_cols)
 
+    
     ranked = calculate_score(fire)
 
+    # 依照原本的 FIRE 觸發參數
+    trigger_volume = float(
+        cfg["fire"]["trigger_volume_ratio"]
+    )
+    trigger_near_high = float(
+        cfg["fire"]["trigger_near_high_pct"]
+    )
+
+    ranked["breakout_distance_pct"] = pd.to_numeric(
+        ranked["breakout_distance_pct"],
+        errors="coerce",
+    )
+
+    # 先判斷接近突破，再判斷真正突破
+    ranked["breakout_status"] = "FIRE"
+
+    near_breakout = (
+        (ranked["volume_ratio"] >= trigger_volume)
+        & (
+            ranked["breakout_distance_pct"]
+            >= trigger_near_high
+        )
+    )
+
+    confirmed_breakout = (
+        near_breakout
+        & (ranked["breakout_distance_pct"] > 0)
+    )
+
+    ranked.loc[
+        near_breakout,
+        "breakout_status",
+    ] = "NEAR_BREAKOUT"
+
+    ranked.loc[
+        confirmed_breakout,
+        "breakout_status",
+    ] = "BREAKOUT"
+
+    # 突破優先，其次接近突破
+    ranked["breakout_priority"] = (
+        ranked["breakout_status"].map(
+            {
+                "BREAKOUT": 2,
+                "NEAR_BREAKOUT": 1,
+                "FIRE": 0,
+            }
+        )
+    )
+
+
+    
     ranked = ranked.sort_values(
         [
+            "breakout_priority",
             "total_score",
             "fire_confirmations",
             "volume_ratio",
             "stock_id",
         ],
-        ascending=[False, False, False, True],
+        ascending=[
+            False,
+            False,
+            False,
+            False,
+            True,
+        ],
     )
+
 
     # 不足最低檔數時，保留實際結果，不硬湊
     picks = ranked.head(max_picks).copy()
@@ -150,6 +241,9 @@ def main():
         "rsi14",
         "volume_ratio",
         "near_high_pct",
+        "breakout_status",
+        "previous_high_close_20",
+        "breakout_distance_pct",
         "score_fire",
         "score_volume",
         "score_near_high",
@@ -189,6 +283,8 @@ def main():
                 "volume_ratio",
                 "rsi14",
                 "total_score",
+                "breakout_status",
+                "breakout_distance_pct",
             ]
         ].to_string(index=False)
     )
