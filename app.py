@@ -16,7 +16,7 @@ st.set_page_config(
 HISTORY_PATH = Path("data/history/twse_daily.csv")
 PICKS_PATH = Path("data/history/combined_top_picks.csv")
 PICKS_HISTORY_PATH = Path("data/history/combined_picks_history.csv")
-INDICATORS_PATH = Path("data/reports/technical_indicators.csv")
+INDICATORS_PATH = Path("data/history/technical_indicators.csv")
 TDCC_PATH = Path("data/history/tdcc_analysis.csv")
 TDCC_WEEKLY_PATH = Path("data/history/tdcc_weekly.csv")
 SIGNALS_PATH = Path("data/history/stock_signals.csv")
