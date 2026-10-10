@@ -63,6 +63,8 @@ jobs:
       - name: Check TDCC historical dates
         run: python src/tdcc_history_check.py
         
+      - name: Test TDCC historical archive
+        run: python src/tdcc_archive_test.py
       - name: Upload FIRE top picks
         uses: actions/upload-artifact@v4
         with:
