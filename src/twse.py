@@ -40,17 +40,38 @@ def fetch_twse_daily(target_date):
     if payload.get("stat") != "OK":
         return pd.DataFrame()
 
-    fields = payload.get("fields9")
-    rows = payload.get("data9")
+    
+    # 新版 TWSE JSON 使用 tables 陣列
+    tables = payload.get("tables", [])
 
-    if not fields or not rows:
-        for key, value in payload.items():
-            if key.startswith("fields"):
-                print(key, ":", value)
+    fields = None
+    rows = None
 
-        raise ValueError("TWSE 回應缺少個股行情表")
+    for table in tables:
+        if not isinstance(table, dict):
+            continue
+
+        candidate_fields = table.get("fields", [])
+        candidate_rows = table.get("data", [])
+
+        if (
+            "證券代號" in candidate_fields
+            and "證券名稱" in candidate_fields
+            and "成交金額" in candidate_fields
+            and "收盤價" in candidate_fields
+            and candidate_rows
+        ):
+            fields = candidate_fields
+            rows = candidate_rows
+            break
+
+    if fields is None or rows is None:
+        raise ValueError(
+            "TWSE tables 中找不到完整個股行情表"
+        )
 
     df = pd.DataFrame(rows, columns=fields)
+
 
     required = [
         "證券代號",
