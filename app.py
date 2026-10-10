@@ -164,6 +164,9 @@ def show_price_chart(stock_prices):
         xaxis_title="日期",
         yaxis_title="價格（元）",
         legend=dict(orientation="h", y=1.12),
+        font=dict(color="#dce7f7"),
+        xaxis=dict(gridcolor="#26374f", tickfont=dict(color="#a9bdd8")),
+        yaxis=dict(gridcolor="#26374f", tickfont=dict(color="#a9bdd8")),
     )
     if start_date is not None:
         fig.update_xaxes(
@@ -173,44 +176,54 @@ def show_price_chart(stock_prices):
             ]
         )
     st.plotly_chart(fig, use_container_width=True)
-    # ===== 成交量柱狀圖 =====
+    # ===== 成交量柱狀圖（與股價圖共用時間區間） =====
     if "volume" in stock_prices.columns:
-                st.markdown("### 成交量")
+        volume_prices = stock_prices.copy()
+        volume_prices["volume"] = pd.to_numeric(
+            volume_prices["volume"], errors="coerce"
+        )
+        volume_prices = volume_prices.dropna(subset=["volume"])
 
-                volume_fig = go.Figure(
-                    go.Bar(
-                        x=stock_prices["date"],
-                        y=stock_prices["volume"],
-                        marker_color="#648bff",
-                    )
+        if not volume_prices.empty:
+            st.markdown("### 📊 每日成交量")
+            previous_close = volume_prices["close"].shift(1)
+            bar_colors = [
+                "#ef5350" if pd.notna(prev) and close >= prev else "#26a69a"
+                for close, prev in zip(volume_prices["close"], previous_close)
+            ]
+            volume_fig = go.Figure(
+                go.Bar(
+                    x=volume_prices["date"],
+                    y=volume_prices["volume"],
+                    marker_color=bar_colors,
+                    name="成交量",
                 )
+            )
+            volume_fig.update_layout(
+                template="plotly_dark",
+                height=230,
+                margin=dict(l=10, r=10, t=35, b=10),
+                paper_bgcolor="#101827",
+                plot_bgcolor="#101827",
+                font=dict(color="#dce7f7"),
+                xaxis_title="日期",
+                yaxis_title="成交量（原始資料單位）",
+                showlegend=False,
+                xaxis=dict(
+                    tickfont=dict(color="#a9bdd8"),
+                    gridcolor="#26374f",
+                ),
+                yaxis=dict(
+                    tickfont=dict(color="#a9bdd8"),
+                    gridcolor="#26374f",
+                ),
+            )
+            if start_date is not None:
+                volume_fig.update_xaxes(
+                    range=[start_date, stock_prices["date"].max()]
+                )
+            st.plotly_chart(volume_fig, use_container_width=True)
 
-                volume_fig.update_layout(
-                    template="plotly_dark",
-                    height=230,
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    paper_bgcolor="#101827",
-                    plot_bgcolor="#101827",
-                    xaxis_title="日期",
-                    yaxis_title="成交量（原始資料單位）",
-                    font=dict(color="#dce7f7"),
-                    title_font=dict(color="#eaf1ff", size=16),
-                    xaxis=dict(
-                        tickfont=dict(color="#a9bdd8"),
-                        title_font=dict(color="#dce7f7"),
-                        gridcolor="#26374f",
-                    ),
-                    yaxis=dict(
-                        tickfont=dict(color="#a9bdd8"),
-                        title_font=dict(color="#dce7f7"),
-                        gridcolor="#26374f",
-                    ),
-                )
-
-                st.plotly_chart(
-                    volume_fig,
-                    use_container_width=True,
-                )
 st.markdown(
     """
     
@@ -943,40 +956,6 @@ with tab2:
             st.markdown("### K 線與均線")
             show_price_chart(stock_prices)
 
-            if "volume" in stock_prices.columns:
-                st.markdown("### 成交量")
-                volume_fig = go.Figure(
-                    go.Bar(
-                        x=stock_prices["date"],
-                        y=stock_prices["volume"],
-                        marker_color="#648bff",
-                    )
-                )
-                volume_fig.update_layout(
-                    template="plotly_dark",
-                    height=230,
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    paper_bgcolor="#101827",
-                    plot_bgcolor="#101827",
-                    xaxis_title="日期",
-                    yaxis_title="成交量（原始資料單位）",
-                )
-                title_font=dict(color="#eaf1ff", size=16),
-                xaxis=dict(
-                    tickfont=dict(color="#a9bdd8"),
-                    title_font=dict(color="#dce7f7"),
-                    gridcolor="#26374f",
-                ),
-                yaxis=dict(
-                    tickfont=dict(color="#a9bdd8"),
-                    title_font=dict(color="#dce7f7"),
-                    gridcolor="#26374f",
-                ),
-               
-                st.plotly_chart(
-                    volume_fig,
-                    use_container_width=True,
-                )
 
     st.markdown("### 技術指標")
 
