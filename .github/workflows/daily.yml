@@ -39,6 +39,15 @@ jobs:
       - name: Build TWSE history
         run: python src/history.py
 
+      - name: Run basic stock screener
+        run: python src/screener.py
+
+      - name: Upload screening results
+        uses: actions/upload-artifact@v4
+        with:
+          name: basic-screen-results
+          path: data/reports/basic_screen.csv
+
       - name: Upload history data
         uses: actions/upload-artifact@v4
         with:
