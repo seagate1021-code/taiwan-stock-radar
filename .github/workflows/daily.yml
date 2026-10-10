@@ -72,6 +72,13 @@ jobs:
       - name: Confirm FIRE with TDCC
         run: python src/tdcc_confirmed.py
         
+      - name: Upload FIRE TDCC confirmed picks
+        uses: actions/upload-artifact@v4
+        with:
+          name: fire-tdcc-confirmed
+          path: data/reports/tdcc_confirmed.csv
+          if-no-files-found: error
+       
       - name: Check TDCC historical dates
         run: python src/tdcc_history_check.py
         
