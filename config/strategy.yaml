@@ -1,0 +1,50 @@
+
+# Taiwan Stock Radar - Strategy Configuration
+
+history:
+  start_date: "2026-06-02"
+  min_history_days: 70
+  bootstrap_batch_size: 25
+
+basic:
+  min_price: 30
+  min_avg_trade_value_20: 30000000
+
+fire:
+  min_confirmations: 4
+  min_volume_ratio: 1.2
+  near_high_pct: -3.0
+  trigger_volume_ratio: 1.2
+  trigger_near_high_pct: -1.5
+
+hot:
+  rsi: 80
+  price_vs_ma20_pct: 20
+  daily_change_pct: 9.0
+
+pullback:
+  rsi_min: 45
+  rsi_max: 60
+  max_volume_ratio: 1.10
+  ma10_min: -3.0
+  ma10_max: 3.0
+  ma20_min: -2.0
+  ma20_max: 4.0
+
+setup:
+  min_confirmations: 3
+  min_daily_change_pct: -4.0
+
+tdcc:
+  target_period_count: 12
+  max_historical_requests_per_run: 11
+  noise_pp: 0.05
+
+selection:
+  min_picks: 3
+  max_picks: 5
+
+storage:
+  stage_batch_size: 25
+  lifecycle_batch_size: 30
+  snapshot_batch_size: 40
