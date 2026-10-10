@@ -37,11 +37,22 @@ def fetch_twse_daily(target_date):
     if payload.get("stat") != "OK":
         return pd.DataFrame()
 
-    fields = payload.get("fields9")
-    rows = payload.get("data9")
+    
+fields = payload.get("fields9")
+rows = payload.get("data9")
 
-    if not fields or not rows:
-        raise ValueError("TWSE 回應缺少每日個股行情表")
+if not fields or not rows:
+    print("TWSE 回傳狀態:", payload.get("stat"))
+    print("TWSE 回傳欄位:", list(payload.keys()))
+
+    for key, value in payload.items():
+        if key.startswith("fields"):
+            print(key, ":", value[:8] if isinstance(value, list) else value)
+
+    raise ValueError(
+        "找不到預期的個股行情表，請檢查上方回傳欄位"
+    )
+
 
     df = pd.DataFrame(rows, columns=fields)
 
