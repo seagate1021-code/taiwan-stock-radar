@@ -14,7 +14,7 @@ st.set_page_config(
 
 # 讀取 GitHub Actions 已產生的資料
 HISTORY_PATH = Path("data/history/twse_daily.csv")
-PICKS_PATH = Path("data/reports/combined_top_picks.csv")
+PICKS_PATH = Path("data/history/combined_top_picks.csv")
 PICKS_HISTORY_PATH = Path("data/history/combined_picks_history.csv")
 INDICATORS_PATH = Path("data/reports/technical_indicators.csv")
 TDCC_PATH = Path("data/reports/tdcc_analysis.csv")
