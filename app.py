@@ -165,19 +165,6 @@ def show_price_chart(stock_prices):
         yaxis_title="價格（元）",
         legend=dict(orientation="h", y=1.12),
     )
-        fig.update_layout(
-        font=dict(color="#dce7f7"),
-        xaxis=dict(
-            tickfont=dict(color="#a9bdd8"),
-            title_font=dict(color="#dce7f7"),
-            gridcolor="#26374f",
-        ),
-        yaxis=dict(
-            tickfont=dict(color="#a9bdd8"),
-            title_font=dict(color="#dce7f7"),
-            gridcolor="#26374f",
-        ),
-    )
     if start_date is not None:
         fig.update_xaxes(
             range=[
@@ -999,8 +986,6 @@ with tab2:
                     xaxis_title="日期",
                     yaxis_title="成交量（原始資料單位）",
                 )
-                            volume_fig.update_layout(
-                font=dict(color="#dce7f7"),
                 title_font=dict(color="#eaf1ff", size=16),
                 xaxis=dict(
                     tickfont=dict(color="#a9bdd8"),
