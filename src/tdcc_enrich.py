@@ -30,7 +30,11 @@ def main():
         "trend",
     ]
 
-    missing = [c for c in columns if c not in tdcc.columns]
+    missing = [
+        col for col in columns
+        if col not in tdcc.columns
+    ]
+
     if missing:
         raise ValueError(f"TDCC 缺少欄位: {missing}")
 
@@ -42,29 +46,39 @@ def main():
         on="stock_id",
         how="left",
         validate="one_to_one",
+        suffixes=("_price", "_tdcc"),
     )
 
-        result = result.rename(
+    result = result.rename(
         columns={
-            "date_x": "price_date",
-            "date_y": "tdcc_date",
+            "date": "price_date",
+            "date_price": "price_date",
+            "date_tdcc": "tdcc_date",
             "trend": "tdcc_trend",
         }
     )
 
     result["price_date"] = pd.to_datetime(
-        result["price_date"]
-    )
-    result["tdcc_date"] = pd.to_datetime(
-        result["tdcc_date"]
+        result["price_date"],
+        errors="coerce",
     )
 
+    result["tdcc_date"] = pd.to_datetime(
+        result["tdcc_date"],
+        errors="coerce",
+    )
+
+    if result["price_date"].isna().any():
+        raise ValueError("FIRE 股價日期有無效資料")
+
+    # TDCC 日期不能晚於股價日期
     future_data = (
         result["tdcc_date"] > result["price_date"]
     )
 
     if future_data.any():
-        print("警告：部分TDCC資料日期晚於股價日期")
+        print("警告：部分 TDCC 資料日期晚於股價日期")
+
         result.loc[
             future_data,
             [
@@ -102,6 +116,7 @@ def main():
     ]
 
     print("FIRE 精選股票數:", len(result))
+
     print(
         "有完整TDCC資料:",
         (result["tdcc_trend"] != "NO_DATA").sum(),
