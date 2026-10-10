@@ -145,21 +145,112 @@ def show_price_chart(stock_prices):
 
 st.markdown(
     """
-    <style>
-    .stApp {
-        background-color: #080f1d;
-        color: #e8eefc;
-    }
-    [data-testid="stMetric"] {
-        background: #111d30;
-        padding: 15px;
-        border: 1px solid #23334d;
-        border-radius: 12px;
-    }
-    h1, h2, h3 {
-        color: #eaf1ff;
-    }
-    </style>
+    
+<style>
+/* ===== 整體深色背景 ===== */
+.stApp {
+    background: linear-gradient(
+        160deg,
+        #080f1d 0%,
+        #0b1527 55%,
+        #0d1a2f 100%
+    );
+    color: #e8eefc;
+}
+
+/* ===== 側邊欄 ===== */
+[data-testid="stSidebar"] {
+    background: #0c1729;
+    border-right: 1px solid #24334c;
+}
+
+[data-testid="stSidebar"] * {
+    color: #e8eefc;
+}
+
+/* ===== 標題 ===== */
+h1, h2, h3 {
+    color: #eaf1ff;
+    letter-spacing: 0.3px;
+}
+
+h1 {
+    font-weight: 800;
+}
+
+h2, h3 {
+    font-weight: 700;
+}
+
+/* ===== 指標卡片 ===== */
+[data-testid="stMetric"] {
+    background: linear-gradient(
+        145deg,
+        #14243b,
+        #101c30
+    );
+    padding: 18px;
+    border: 1px solid #2a3d58;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+[data-testid="stMetricLabel"] {
+    color: #9fb4d2;
+}
+
+[data-testid="stMetricValue"] {
+    color: #f1f6ff;
+    font-weight: 700;
+}
+
+/* ===== 頁籤 ===== */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 10px;
+    border-bottom: 1px solid #263a55;
+}
+
+.stTabs [data-baseweb="tab"] {
+    background: #132239;
+    border: 1px solid #263a55;
+    border-radius: 10px 10px 0 0;
+    color: #c5d5ed;
+    padding: 10px 18px;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #193451;
+    color: #ffffff;
+    border-bottom: 2px solid #38bdf8;
+}
+
+/* ===== 資料表格 ===== */
+[data-testid="stDataFrame"] {
+    border: 1px solid #2a3d58;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* ===== 輸入框 ===== */
+.stTextInput input {
+    background: #14243b;
+    color: #f1f6ff;
+    border: 1px solid #304764;
+    border-radius: 9px;
+}
+
+/* ===== 展開區塊 ===== */
+[data-testid="stExpander"] {
+    background: #101d30;
+    border: 1px solid #2a3d58;
+    border-radius: 12px;
+}
+
+/* ===== 分隔線 ===== */
+hr {
+    border-color: #293b55;
+}
+</style>
     """,
     unsafe_allow_html=True,
 )
