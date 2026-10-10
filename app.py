@@ -174,7 +174,7 @@ def show_price_chart(stock_prices):
         )
     st.plotly_chart(fig, use_container_width=True)
     # ===== 成交量柱狀圖 =====
-                if "volume" in stock_prices.columns:
+    if "volume" in stock_prices.columns:
                 st.markdown("### 成交量")
 
                 volume_fig = go.Figure(
