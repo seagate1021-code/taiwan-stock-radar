@@ -51,6 +51,15 @@ jobs:
       - name: Classify stock signals
         run: python src/signals.py
 
+      - name: Rank FIRE top picks
+        run: python src/top_picks.py
+
+      - name: Upload FIRE top picks
+        uses: actions/upload-artifact@v4
+        with:
+          name: fire-top-picks
+          path: data/reports/top_picks.csv
+
       - name: Upload stock signals
         uses: actions/upload-artifact@v4
         with:
