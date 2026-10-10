@@ -10,41 +10,54 @@ OUTPUT_PATH = Path("data/reports/top_picks.csv")
 CONFIG_PATH = Path("config/strategy.yaml")
 
 
-def calculate_score(df):
+
+def calculate_score(df, ranking):
     df = df.copy()
 
-    # 1. FIRE 確認數
-    df["score_fire"] = df["fire_confirmations"] * 20
-
-    # 2. 成交量比率，最高加30分
-    df["score_volume"] = (
-        (df["volume_ratio"] - 1).clip(lower=0, upper=3)
-        * 10
+    # 1. FIRE 確認數評分
+    df["score_fire"] = (
+        df["fire_confirmations"]
+        * ranking["fire_confirmation_points"]
     )
 
-    # 3. 接近20日最高收盤價，最高加20分
-    # 距離高點越遠，得分越低
-    df["score_near_high"] = (
-        20 + df["near_high_pct"] * 4
-    ).clip(lower=0, upper=20)
+    # 2. 成交量評分
+    df["score_volume"] = (
+        (df["volume_ratio"] - 1).clip(lower=0)
+        * ranking["volume_ratio_points"]
+    ).clip(upper=ranking["volume_score_cap"])
 
-    # 4. RSI 60～75為較理想區間
+    # 3. 接近高點評分
+    df["score_near_high"] = (
+        ranking["near_high_max_points"]
+        + df["near_high_pct"]
+        * ranking["near_high_points_per_pct"]
+    ).clip(
+        lower=0,
+        upper=ranking["near_high_max_points"],
+    )
+
+    # 4. RSI 評分
     df["score_rsi"] = 0.0
 
-    df.loc[
-        df["rsi14"].between(60, 75),
-        "score_rsi",
-    ] = 20
+    ideal_min = ranking["rsi_ideal_min"]
+    ideal_max = ranking["rsi_ideal_max"]
+    moderate_min = ranking["rsi_moderate_min"]
 
     df.loc[
-        df["rsi14"].between(55, 60, inclusive="left"),
+        df["rsi14"].between(ideal_min, ideal_max),
         "score_rsi",
-    ] = 10
+    ] = ranking["rsi_ideal_points"]
 
     df.loc[
-        df["rsi14"] > 75,
+        (df["rsi14"] >= moderate_min)
+        & (df["rsi14"] < ideal_min),
         "score_rsi",
-    ] = 5
+    ] = ranking["rsi_moderate_points"]
+
+    df.loc[
+        df["rsi14"] > ideal_max,
+        "score_rsi",
+    ] = ranking["rsi_high_points"]
 
     # 5. HOT 過熱扣分
     df["score_hot"] = 0.0
@@ -52,8 +65,9 @@ def calculate_score(df):
     df.loc[
         df["hot_flag"] == "HOT",
         "score_hot",
-    ] = -30
+    ] = -ranking["hot_penalty"]
 
+    # 6. 總分
     df["total_score"] = (
         df["score_fire"]
         + df["score_volume"]
@@ -63,7 +77,6 @@ def calculate_score(df):
     )
 
     return df
-
 
 def main():
     with CONFIG_PATH.open("r", encoding="utf-8") as f:
@@ -148,7 +161,7 @@ def main():
     fire = fire.dropna(subset=numeric_cols)
 
     
-    ranked = calculate_score(fire)
+    ranked = calculate_score(fire, cfg["ranking"])
 
     # 依照原本的 FIRE 觸發參數
     trigger_volume = float(
