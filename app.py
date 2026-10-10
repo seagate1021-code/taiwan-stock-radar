@@ -18,6 +18,7 @@ PICKS_PATH = Path("data/history/combined_top_picks.csv")
 PICKS_HISTORY_PATH = Path("data/history/combined_picks_history.csv")
 INDICATORS_PATH = Path("data/reports/technical_indicators.csv")
 TDCC_PATH = Path("data/reports/tdcc_analysis.csv")
+SIGNALS_PATH = Path("data/history/stock_signals.csv")
 
 
 @st.cache_data(ttl=300)
@@ -170,6 +171,7 @@ picks = read_csv(PICKS_PATH)
 picks_history = read_csv(PICKS_HISTORY_PATH)
 indicators = read_csv(INDICATORS_PATH)
 tdcc = read_csv(TDCC_PATH)
+signals = read_csv(SIGNALS_PATH)
 
 if not picks.empty and "combined_rank" in picks.columns:
     picks["combined_rank"] = pd.to_numeric(
