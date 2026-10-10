@@ -367,6 +367,93 @@ with tab2:
 
     st.divider()
 
+    # ===== TDCC 大戶籌碼分析 =====
+    st.subheader("🏦 TDCC 大戶籌碼分析")
+
+    if tdcc.empty:
+        st.info("目前尚無 TDCC 分析資料。")
+    else:
+        stock_tdcc = tdcc[
+            tdcc["stock_id"].astype(str).str.strip()
+            == str(stock_id).strip()
+        ].copy()
+
+        if stock_tdcc.empty:
+            st.info("此股票目前沒有 TDCC 籌碼分析資料。")
+        else:
+            stock_tdcc["date"] = pd.to_datetime(
+                stock_tdcc["date"], errors="coerce"
+            )
+            stock_tdcc = stock_tdcc.sort_values(
+                "date", ascending=False
+            )
+
+            latest_tdcc = stock_tdcc.iloc[0]
+
+            def tdcc_number(value, digits=2):
+                number = pd.to_numeric(value, errors="coerce")
+                if pd.isna(number):
+                    return "—"
+                return f"{number:.{digits}f}"
+
+            trend_value = str(latest_tdcc["trend"]).strip().upper()
+
+            trend_labels = {
+                "ACCUMULATING": "🟢 大戶增持",
+                "DISTRIBUTING": "🔴 大戶減持",
+                "NEUTRAL": "⚪ 籌碼持平",
+            }
+
+            trend_label = trend_labels.get(
+                trend_value, trend_value
+            )
+
+            st.caption(
+                "TDCC 最新資料日期："
+                + latest_tdcc["date"].strftime("%Y-%m-%d")
+            )
+
+            c1, c2, c3, c4 = st.columns(4)
+
+            c1.metric(
+                "大戶持股比例",
+                tdcc_number(latest_tdcc["big_holder_pct"]) + "%"
+            )
+            c2.metric(
+                "近 4 週變化",
+                tdcc_number(latest_tdcc["change_4w_pp"]) + " 百分點"
+            )
+            c3.metric(
+                "近 12 週變化",
+                tdcc_number(latest_tdcc["change_12w_pp"]) + " 百分點"
+            )
+            c4.metric(
+                "籌碼趨勢",
+                trend_label
+            )
+
+            st.caption(
+                "分析期間筆數："
+                + str(latest_tdcc["period_count"])
+            )
+
+            with st.expander("查看 TDCC 分析資料"):
+                st.dataframe(
+                    stock_tdcc[
+                        [
+                            "date",
+                            "big_holder_pct",
+                            "change_4w_pp",
+                            "change_12w_pp",
+                            "trend",
+                        ]
+                    ],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+    st.divider()
+
     if prices.empty:
         st.warning("歷史股價資料尚未準備好。")
     else:
