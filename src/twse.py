@@ -24,15 +24,40 @@ def fetch_twse_daily(target_date):
         "type": "ALLBUT0999",
     }
 
-    response = requests.get(
-        URL,
-        params=params,
-        timeout=30,
-        headers={"User-Agent": "Mozilla/5.0"},
-    )
-    response.raise_for_status()
+    
+    import time
 
-    payload = response.json()
+    payload = None
+
+    for attempt in range(3):
+        try:
+            response = requests.get(
+                URL,
+                params=params,
+                timeout=30,
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Accept": "application/json",
+                },
+            )
+
+            response.raise_for_status()
+            payload = response.json()
+            break
+
+        except (
+            requests.exceptions.RequestException,
+            ValueError,
+        ) as e:
+            print(
+                f"TWSE 請求失敗，第 {attempt + 1}/3 次："
+                f"{type(e).__name__}: {e}"
+            )
+
+            if attempt == 2:
+                raise
+
+            time.sleep(5 * (attempt + 1))
 
     print("TWSE 回傳狀態:", payload.get("stat"))
     print("TWSE 回傳欄位:", list(payload.keys()))
