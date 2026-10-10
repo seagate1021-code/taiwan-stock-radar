@@ -972,7 +972,7 @@ with tab2:
                     title_font=dict(color="#dce7f7"),
                     gridcolor="#26374f",
                 ),
-              )
+               )
                 st.plotly_chart(
                     volume_fig,
                     use_container_width=True,
