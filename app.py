@@ -437,6 +437,64 @@ with tab2:
                 + str(latest_tdcc["period_count"])
             )
 
+            # ===== TDCC 籌碼變化趨勢圖 =====
+            st.markdown("#### 📈 TDCC 籌碼變化趨勢")
+
+            chart_tdcc = stock_tdcc.copy()
+            chart_tdcc = chart_tdcc.dropna(subset=["date"])
+            chart_tdcc = chart_tdcc.sort_values("date")
+
+            for col in [
+                "big_holder_pct",
+                "change_4w_pp",
+                "change_12w_pp",
+            ]:
+                chart_tdcc[col] = pd.to_numeric(
+                    chart_tdcc[col], errors="coerce"
+                )
+
+            if chart_tdcc["big_holder_pct"].notna().any():
+                import plotly.graph_objects as go
+
+                fig_tdcc = go.Figure()
+
+                fig_tdcc.add_trace(
+                    go.Scatter(
+                        x=chart_tdcc["date"],
+                        y=chart_tdcc["big_holder_pct"],
+                        mode="lines+markers",
+                        name="大戶持股比例",
+                        line=dict(color="#38BDF8", width=3),
+                        marker=dict(size=6),
+                        hovertemplate=(
+                            "日期：%{x|%Y-%m-%d}"
+                            "<br>大戶持股：%{y:.2f}%"
+                            "<extra></extra>"
+                        ),
+                    )
+                )
+
+                fig_tdcc.update_layout(
+                    template="plotly_dark",
+                    height=350,
+                    margin=dict(l=20, r=20, t=30, b=20),
+                    xaxis_title="資料日期",
+                    yaxis_title="大戶持股比例 (%)",
+                    hovermode="x unified",
+                )
+
+                st.plotly_chart(
+                    fig_tdcc,
+                    use_container_width=True,
+                )
+            else:
+                st.info("目前沒有可繪製的大戶持股比例資料。")
+
+            st.caption(
+                "圖表使用已保存的 TDCC 分析資料；"
+                "若只有一筆資料，會只顯示一個資料點。"
+            )
+
             with st.expander("查看 TDCC 分析資料"):
                 st.dataframe(
                     stock_tdcc[
