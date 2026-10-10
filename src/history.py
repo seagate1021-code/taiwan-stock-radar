@@ -85,7 +85,7 @@ def main():
             break
 
         current += timedelta(days=1)
-        time.sleep(1)
+        time.sleep(3)
 
     if new_data:
         new_df = pd.concat(
