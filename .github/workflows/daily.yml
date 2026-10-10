@@ -1,8 +1,11 @@
 
+
 name: Taiwan Stock Radar
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * *"
 
 permissions:
   contents: write
@@ -123,6 +126,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "沒有新的歷史資料需要儲存"
           else
-            git commit -m "Update TWSE historical data"
+            git commit -m "Update TWSE and TDCC historical data"
             git push
           fi
