@@ -174,7 +174,69 @@ def show_price_chart(stock_prices):
             ]
         )
     st.plotly_chart(fig, use_container_width=True)
+    # ===== 成交量柱狀圖 =====
+    if "volume" in stock_prices.columns:
 
+        volume_prices = stock_prices.copy()
+
+        volume_prices["volume"] = pd.to_numeric(
+            volume_prices["volume"],
+            errors="coerce",
+        )
+
+        volume_prices = volume_prices.dropna(
+            subset=["date", "volume"]
+        )
+
+        if not volume_prices.empty:
+
+            volume_prices["previous_close"] = (
+                volume_prices["close"].shift(1)
+            )
+
+            volume_prices["bar_color"] = "#26a69a"
+
+            volume_prices.loc[
+                volume_prices["close"]
+                >= volume_prices["previous_close"],
+                "bar_color",
+            ] = "#ef5350"
+
+            volume_fig = go.Figure()
+
+            volume_fig.add_trace(
+                go.Bar(
+                    x=volume_prices["date"],
+                    y=volume_prices["volume"],
+                    marker_color=volume_prices["bar_color"],
+                    name="成交量",
+                )
+            )
+
+            volume_fig.update_layout(
+                title="📊 每日成交量",
+                template="plotly_dark",
+                height=230,
+                margin=dict(l=10, r=10, t=45, b=10),
+                paper_bgcolor="#101827",
+                plot_bgcolor="#101827",
+                xaxis_title="日期",
+                yaxis_title="成交量（股）",
+                showlegend=False,
+            )
+
+            if start_date is not None:
+                volume_fig.update_xaxes(
+                    range=[
+                        start_date,
+                        stock_prices["date"].max(),
+                    ]
+                )
+
+            st.plotly_chart(
+                volume_fig,
+                use_container_width=True,
+            )
 st.markdown(
     """
     
