@@ -862,11 +862,9 @@ with tab2:
                 + "｜大戶趨勢："
                 + str(item.get("tdcc_trend", "—"))
             )
+        
         else:
-            st.info(
-                "這檔股票不在本次綜合前五名。"
-                "不代表它沒有 FIRE 訊號。"
-            )
+            pass
 
     if not tdcc.empty and "stock_id" in tdcc.columns:
         matched_tdcc = tdcc[
