@@ -39,6 +39,9 @@ jobs:
       - name: Build TWSE history
         run: python src/history.py
 
+      - name: Backfill historical volume
+        run: python src/backfill_volume.py
+
       - name: Run basic stock screener
         run: python src/screener.py
 
