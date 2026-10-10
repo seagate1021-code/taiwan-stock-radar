@@ -54,6 +54,9 @@ jobs:
       - name: Rank FIRE top picks
         run: python src/top_picks.py
 
+      - name: Test TDCC API
+        run: python src/tdcc_test.py
+
       - name: Upload FIRE top picks
         uses: actions/upload-artifact@v4
         with:
