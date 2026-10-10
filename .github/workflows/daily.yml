@@ -45,6 +45,15 @@ jobs:
       - name: Calculate technical indicators
         run: python src/indicators.py
 
+      - name: Classify stock signals
+        run: python src/signals.py
+
+      - name: Upload stock signals
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-signals
+          path: data/reports/stock_signals.csv
+
       - name: Upload technical indicators
         uses: actions/upload-artifact@v4
         with:
