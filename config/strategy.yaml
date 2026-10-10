@@ -48,3 +48,23 @@ storage:
   stage_batch_size: 25
   lifecycle_batch_size: 30
   snapshot_batch_size: 40
+
+ranking:
+  fire_confirmation_points: 20
+
+  volume_ratio_points: 10
+  volume_score_cap: 30
+
+  near_high_max_points: 20
+  near_high_points_per_pct: 4
+
+  rsi_ideal_min: 60
+  rsi_ideal_max: 75
+  rsi_ideal_points: 20
+
+  rsi_moderate_min: 55
+  rsi_moderate_points: 10
+
+  rsi_high_points: 5
+
+  hot_penalty: 30
