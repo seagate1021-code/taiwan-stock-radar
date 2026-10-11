@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-st.set_page_config(page_title="Taiwan Stock Radar | Pro Terminal", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Taiwan Stock Radar | Investment Workspace", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
 
 HISTORY_PATH = Path("data/history/twse_daily.csv")
 PICKS_PATH = Path("data/history/combined_top_picks.csv")
@@ -102,7 +102,7 @@ def metric_row(items):
 def chart_style(fig, height=300, showlegend=False):
     fig.update_layout(
         template="plotly_dark", height=height, paper_bgcolor="#101b2d",
-        plot_bgcolor="#101b2d", font=dict(color="#d9e6f7", family="Arial, Microsoft JhengHei, sans-serif", size=12),
+        plot_bgcolor="#101b2d", font=dict(color="#d9e6f7", family="Microsoft JhengHei, PingFang TC, Noto Sans TC, sans-serif", size=12),
         margin=dict(l=12, r=12, t=22, b=16), showlegend=showlegend,
         xaxis=dict(title=None, gridcolor="#26384e", zeroline=False, tickfont=dict(color="#b5c8df")),
         yaxis=dict(title=None, gridcolor="#26384e", zeroline=False, tickfont=dict(color="#b5c8df")),
@@ -125,7 +125,7 @@ def price_chart(rows):
         return
 
     period = st.radio("技術分析時間區間", ["近 1 個月", "近 3 個月", "近 6 個月", "近 1 年", "全部"],
-                      index=2, horizontal=True, key="v12_period")
+                      index=2, horizontal=True, key="v4_period")
     days = {"近 1 個月": 30, "近 3 個月": 90, "近 6 個月": 180, "近 1 年": 365}
     start = p["date"].max() - pd.Timedelta(days=days[period]) if period in days else p["date"].min()
     end = p["date"].max() + pd.Timedelta(days=2)
@@ -210,9 +210,9 @@ def price_chart(rows):
                            text=str(level), xanchor="right", yanchor="bottom",
                            showarrow=False, font=dict(color=color, size=11), bgcolor="#101b2d")
 
-    fig.update_layout(template="plotly_dark", height=930, autosize=True,
+    fig.update_layout(template="plotly_dark", height=770, autosize=True,
         paper_bgcolor="#101b2d", plot_bgcolor="#101b2d",
-        font=dict(color="#d9e6f7", family="Arial, Microsoft JhengHei, sans-serif", size=12),
+        font=dict(color="#d9e6f7", family="Microsoft JhengHei, PingFang TC, Noto Sans TC, sans-serif", size=12),
         margin=dict(l=16, r=22, t=72, b=32), hovermode="x unified",
         legend=dict(orientation="h", y=1.06, x=0, font=dict(color="#e5efff", size=12),
                      bgcolor="rgba(16,27,45,0)", traceorder="normal"),
@@ -234,73 +234,62 @@ def price_chart(rows):
 
 st.markdown("""
 <style>
-/* Taiwan Stock Radar v2.1 — terminal design system */
-.stApp {background:#081321;color:#e8f2ff}
-.stApp, .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp label,
-.stApp button, .stApp [data-testid="stMetric"] {
- font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
-}
-[data-testid="stHeader"] {background:#081321e8}
-[data-testid="stSidebar"] {background:#0e2034;border-right:1px solid #25405d}
-.block-container {max-width:1650px;padding-top:1.5rem;padding-bottom:3rem}
-h1,h2,h3 {color:#f5f9ff!important;letter-spacing:.1px}
-h1 {font-size:2rem!important} h2 {font-size:1.5rem!important} h3 {font-size:1.14rem!important}
-[data-testid="stMetric"] {background:#13263e;border:1px solid #294662;border-radius:13px;padding:15px 17px;min-height:105px}
-[data-testid="stMetricLabel"] {color:#9fb8d3}
-[data-testid="stMetricValue"] {color:#f4f9ff;font-size:clamp(1.05rem,2vw,1.7rem);font-weight:730}
-.stTabs [data-baseweb="tab-list"] {gap:16px;border-bottom:1px solid #29435e}
-.stTabs [data-baseweb="tab"] {color:#b8cee4;padding:11px 12px}
-.stTabs [aria-selected="true"] {color:#fff;border-bottom:3px solid #38bdf8}
-[data-testid="stExpander"] {background:#102139;border:1px solid #2c4662;border-radius:12px}
-[data-testid="stExpander"] summary {background:#142943!important;color:#eaf3ff!important;border-radius:10px}
-[data-testid="stExpander"] summary p {color:#eaf3ff!important;font-weight:600}
-[data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:#102139}
-[data-testid="stExpander"] svg {color:#d8e7fa}
-[data-testid="stMarkdownContainer"] p {line-height:1.65}
-[data-testid="stCaptionContainer"] p,.stApp small {color:#9fb4ca!important}
-.stApp [data-testid="stRadio"] label p {color:#d8e8f8!important}
-hr {border-color:#243d57}
-[data-testid="stAlert"] {background:#143050!important;border:1px solid #2c5b83;border-radius:10px}
-[data-testid="stAlert"] p {color:#e9f4ff!important}
-.radar-eyebrow {color:#61c4f3;font-size:.76rem;font-weight:700;letter-spacing:1.7px;margin-bottom:5px}
-.radar-hero {padding:19px 22px;border:1px solid #2b4867;border-radius:16px;background:linear-gradient(120deg,#122a45,#0e2035 70%);margin:8px 0 22px}
-.radar-hero h2 {font-size:1.4rem!important;margin:0 0 7px}
-.radar-muted {color:#a4bad1;font-size:.86rem}
-.radar-section {font-size:.85rem;color:#69c9f6;font-weight:750;letter-spacing:1px;margin:23px 0 12px;padding-bottom:8px;border-bottom:1px solid #233d57}
-.radar-panel {background:#102239;border:1px solid #28435f;border-radius:14px;padding:18px 20px;margin:7px 0 15px;min-height:120px}
-.radar-panel-title {color:#b9d2ea;font-size:.82rem;font-weight:650;margin-bottom:9px}
-.radar-panel-main {font-size:1.25rem;font-weight:750;color:#f3f9ff;line-height:1.5}
-.radar-panel-note {color:#9fb5ce;font-size:.79rem;line-height:1.65;margin-top:7px}
-.radar-green {color:#5de0b2}.radar-amber {color:#f6c16b}.radar-red {color:#ff9299}
-.radar-verdict {background:linear-gradient(110deg,#16395c,#122d4a);border:1px solid #34658b;border-left:4px solid #49c4ee;border-radius:12px;padding:18px 20px;line-height:1.9;margin:10px 0}
-.radar-table-scroll {overflow:auto;max-height:440px;border:1px solid #30465e;border-radius:12px;margin:8px 0 15px;background:#111f32}
-.radar-table {border-collapse:separate;border-spacing:0;width:100%;min-width:560px;color:#e4eefc;font-size:13px}
-.radar-table th {position:sticky;top:0;background:#1b304b;color:#edf5ff;font-weight:700;text-align:left;padding:12px;border-bottom:1px solid #38526d;white-space:nowrap}
-.radar-table td {background:#111f32;color:#e3edf9;padding:11px 12px;border-bottom:1px solid #263950;white-space:nowrap}
-.radar-table tbody tr:nth-child(even) td {background:#17283e}
-.radar-table tbody tr:hover td {background:#223b56}
-@media(max-width:900px) {.block-container{padding-left:1rem;padding-right:1rem}.radar-hero{padding:14px}.radar-panel{padding:14px}}
-
-/* V3.0 design system: TradingView chart hierarchy + Bloomberg information architecture + Tabler surfaces */
 :root {color-scheme:dark}
-.stApp {background:linear-gradient(180deg,#07111e 0%,#0a1726 55%,#081421 100%)!important}
-.block-container {max-width:1840px!important;padding-top:1.35rem!important;padding-left:2.25rem!important;padding-right:2.25rem!important}
-.stApp, .stApp * {font-family:Arial,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
-.stApp h1 {font-size:2.05rem!important;font-weight:800!important;letter-spacing:-.6px!important}
-.stApp h3 {font-size:1.08rem!important;font-weight:750!important}
-.radar-eyebrow {color:#72c8f5!important;font-weight:800!important;letter-spacing:2px!important}
-.radar-hero {background:linear-gradient(115deg,#152d49,#0d2035 65%,#10263e)!important;border:1px solid #345574!important;border-radius:14px!important;padding:23px 27px!important}
-.radar-section {margin-top:34px!important;color:#a3c7e6!important;font-size:.8rem!important;letter-spacing:1.1px!important}
-.radar-panel {min-height:130px!important;background:linear-gradient(160deg,#122941,#102238)!important;border:1px solid #304a65!important;border-radius:12px!important;padding:20px!important;box-shadow:0 4px 16px #00000014}
-.radar-panel-title {font-size:.79rem!important;letter-spacing:.3px!important}
-.radar-panel-main {font-size:clamp(1.35rem,2vw,1.85rem)!important;font-weight:800!important}
-.radar-verdict {background:#122a43!important;border-left:4px solid #59c5f3!important;padding:22px 25px!important;font-size:1.02rem!important}
-.radar-table-scroll {max-height:560px!important}
-.stTabs [data-baseweb="tab-list"] {gap:28px!important}
-.stTabs [data-baseweb="tab"] {font-weight:700!important;font-size:1rem!important}
-[data-testid="stPlotlyChart"] {border:1px solid #263f59;border-radius:13px;overflow:hidden;background:#101b2d;box-shadow:0 8px 32px #00000018}
-[data-testid="stRadio"] {padding:9px 0!important}
-@media(max-width:900px){.block-container{padding-left:1rem!important;padding-right:1rem!important}.radar-panel{padding:13px!important;min-height:100px!important}}
+html, body, .stApp {background:#070e19!important;color:#e7eef8!important}
+.stApp, .stApp * {font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif!important}
+[data-testid="stHeader"] {background:#070e19!important;height:2.1rem!important}
+[data-testid="stSidebar"], [data-testid="collapsedControl"] {display:none!important}
+.block-container {max-width:1660px!important;padding:2.3rem 2.4rem 4rem!important}
+#MainMenu, footer {visibility:hidden}
+.workspace-brand {display:flex;align-items:center;gap:12px;color:#f4f7fc;font-weight:850;font-size:1.13rem;letter-spacing:1.2px;padding:0 0 18px;border-bottom:1px solid #26344a;margin-bottom:20px}
+.brand-mark {display:inline-flex;align-items:center;justify-content:center;width:37px;height:37px;border-radius:10px;background:#17416b;color:#74d2ff;font-size:1.5rem}
+.brand-edition {color:#7189a5;font-size:.72rem;font-weight:650;letter-spacing:1.7px}
+.workspace-subtitle {margin:3px 0 5px;color:#9aafc6;font-size:.83rem;letter-spacing:.2px}
+.workspace-subtitle span {color:#5bb6e9}
+.stApp [data-testid="stTextInput"] label p,.stApp [data-testid="stSelectbox"] label p {font-size:.7rem!important;font-weight:800!important;color:#83a4c8!important;letter-spacing:1px!important}
+.stApp input,.stApp [data-baseweb="select"]>div {background:#111f32!important;border:1px solid #2a435e!important;color:#eaf4ff!important;border-radius:8px!important;min-height:43px!important}
+.stTabs [data-baseweb="tab-list"] {background:#0d1828!important;border:1px solid #273950!important;border-radius:11px!important;padding:5px!important;gap:6px!important;margin:16px 0 20px!important}
+.stTabs [data-baseweb="tab"] {padding:11px 22px!important;color:#9cb1ca!important;border-radius:7px!important;font-size:.92rem!important;font-weight:750!important}
+.stTabs [aria-selected="true"] {background:#1d3d5d!important;color:#fff!important;border-bottom:none!important}
+.instrument-header {display:flex;align-items:center;justify-content:space-between;gap:22px;background:linear-gradient(115deg,#12243b,#0d1b2d);border:1px solid #2d4661;border-radius:13px;padding:25px 30px;margin:10px 0 24px}
+.instrument-overline {color:#59c8f7;font-size:.7rem;letter-spacing:1.6px;font-weight:800}
+.instrument-title {font-size:2.25rem;font-weight:850;line-height:1.6;color:#fff}
+.instrument-title span {font-size:1.42rem;font-weight:700;color:#c9d9ed;margin-left:12px}
+.instrument-date {font-size:.77rem;color:#94aac3;letter-spacing:.25px}
+.instrument-price {text-align:right;white-space:nowrap}
+.price-caption {color:#8ca6c2;font-size:.67rem;font-weight:800;letter-spacing:1.3px}
+.price-number {font-size:2.65rem;line-height:1.35;color:#f8fbff;font-weight:850;font-variant-numeric:tabular-nums}
+.price-delta {font-size:.85rem;color:#9db4cb}
+.radar-green {color:#3cdbad!important}.radar-red {color:#ff8290!important}
+.radar-section {font-size:.72rem;color:#77bde7;font-weight:850;letter-spacing:1.45px;margin:29px 0 14px;padding-bottom:10px;border-bottom:1px solid #25374c}
+.chart-head {display:flex;justify-content:space-between;align-items:center;gap:14px;margin:5px 0 7px}
+.chart-head-main {font-size:1.08rem;color:#f4f8ff;font-weight:800;letter-spacing:.6px}
+.chart-head-sub {color:#8ca7c1;font-size:.72rem;font-weight:650}
+[data-testid="stPlotlyChart"] {border:1px solid #2a3b52;border-radius:12px;overflow:hidden;background:#0d192a!important}
+.stApp [data-testid="stRadio"] {background:#0d192a;border-radius:8px;padding:6px 10px;margin:5px 0 12px}
+.stApp [data-testid="stRadio"] label p {color:#c7d9ed!important;font-size:.78rem!important}
+.radar-panel {background:#101e31;border:1px solid #2b4058;border-radius:10px;padding:17px 19px;margin:4px 0 12px;min-height:112px}
+.radar-panel-title {color:#8ca8c5;font-size:.76rem;font-weight:700;margin-bottom:10px}
+.radar-panel-main {color:#f5f9ff;font-size:1.52rem;font-weight:850;line-height:1.4;font-variant-numeric:tabular-nums}
+.radar-panel-note {color:#8099b4;font-size:.73rem;margin-top:7px;line-height:1.5}
+.radar-verdict {background:#102840;border:1px solid #305774;border-left:4px solid #4ac4ef;border-radius:9px;padding:17px 20px;margin:12px 0;color:#dbeaf9;line-height:1.9;font-size:.92rem}
+.radar-hero {padding:23px 26px;border:1px solid #2a415b;border-radius:12px;background:linear-gradient(115deg,#122b46,#0c1b2e);margin:9px 0 20px}
+.radar-hero h2 {font-size:1.4rem!important;margin:0 0 7px!important}
+.radar-muted {color:#a2b8d0;font-size:.84rem}
+.radar-table-scroll {overflow:auto;max-height:490px;border:1px solid #2b4058;border-radius:10px;background:#101c2d;margin:9px 0 17px}
+.radar-table {border-collapse:separate;border-spacing:0;width:100%;min-width:600px;color:#e2edfb;font-size:13px}
+.radar-table th {position:sticky;top:0;background:#20364f;color:#eaf5ff;text-align:left;padding:12px;border-bottom:1px solid #38526d;white-space:nowrap}
+.radar-table td {background:#101c2d;padding:11px 12px;border-bottom:1px solid #26384b;white-space:nowrap}
+.radar-table tbody tr:nth-child(even) td {background:#15263b}
+.radar-table tbody tr:hover td {background:#213b57}
+[data-testid="stExpander"] {background:#101e31;border:1px solid #2a405a;border-radius:10px}
+[data-testid="stExpander"] summary {color:#eaf3ff!important}
+[data-testid="stCaptionContainer"] p,.stApp small {color:#829bb6!important;font-size:.77rem!important}
+[data-testid="stMarkdownContainer"] p {line-height:1.65}
+.stApp h1,.stApp h2,.stApp h3,.stApp h4 {color:#eef6ff!important}
+[data-testid="stAlert"] {background:#142a40!important;border:1px solid #325575!important;border-radius:9px}
+hr {border-color:#25374c}
+@media(max-width:900px) {.block-container{padding:1.5rem .9rem 3rem!important}.instrument-header{padding:17px;flex-direction:column;align-items:flex-start}.instrument-price{text-align:left}.instrument-title{font-size:1.7rem}.price-number{font-size:2rem}.brand-edition{display:none}.chart-head{flex-direction:column;align-items:flex-start}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -342,27 +331,24 @@ tdcc = read_csv(TDCC_PATH)
 weekly = read_csv(TDCC_WEEKLY_PATH)
 signals = read_csv(SIGNALS_PATH)
 
-st.sidebar.title("🔎 股票搜尋")
-typed = st.sidebar.text_input("股票代號", value="2330", placeholder="例如 2330").strip()
-choices = ["自行輸入"]
-if not picks.empty and "stock_id" in picks.columns:
-    for _, r in picks.iterrows():
-        choices.append(f"{str(r['stock_id']).strip()} {str(r.get('stock_name', ''))}")
-chosen = st.sidebar.selectbox("今日精選股票", choices)
-stock_id = typed if chosen == "自行輸入" else chosen.split()[0]
-st.sidebar.divider()
-st.sidebar.caption("資料由 GitHub Actions 每日產生，非即時行情")
-st.sidebar.caption("v3.0 專業混合終端測試版｜選股策略及資料管線維持不變")
-
-st.markdown('<div class="radar-eyebrow">TAIWAN STOCK RADAR · RESEARCH TERMINAL</div>', unsafe_allow_html=True)
-st.title("📈 Taiwan Stock Radar")
-st.caption("台股智慧選股與個股決策｜FIRE 技術訊號 × TDCC 大戶籌碼")
+# V4 workspace navigation: search and navigation are visible, no hidden sidebar dependency.
+st.markdown('<div class="workspace-brand"><span class="brand-mark">◈</span><span>TAIWAN STOCK RADAR</span><span class="brand-edition">/ INVESTMENT WORKSPACE</span></div>', unsafe_allow_html=True)
+head_left, head_right = st.columns([1.05, 2.4], gap="large")
+with head_left:
+    typed = st.text_input("股票代號 / STOCK SEARCH", value="2330", placeholder="輸入代號，例如 2330")
+with head_right:
+    choices = ["自行輸入"]
+    if not picks.empty and "stock_id" in picks.columns:
+        for _, r in picks.iterrows():
+            choices.append(f"{str(r['stock_id']).strip()} {str(r.get('stock_name', ''))}")
+    chosen = st.selectbox("快速切換 / TODAY'S WATCHLIST", choices)
+stock_id = typed.strip() if chosen == "自行輸入" else chosen.split()[0]
+st.markdown('<div class="workspace-subtitle">市場研究工作台 <span>／</span> FIRE 技術訊號 <span>×</span> TDCC 大戶籌碼 <span>／</span> 每日批次資料 · 非即時行情</div>', unsafe_allow_html=True)
 if not prices.empty:
-    st.caption(f"📅 股價資料更新至 {datefmt(prices['date'].max())}｜非即時行情")
+    st.caption(f"股價資料更新至 {datefmt(prices['date'].max())}｜來源：GitHub Actions 每日資料")
 else:
     st.warning("尚未讀取到歷史股價 CSV。")
-
-tab1, tab2, tab3 = st.tabs(["🏆 每日精選", "📊 個股決策終端", "🗂️ 歷史研究紀錄"])
+tab2, tab1, tab3 = st.tabs(["◈  個股工作台", "▦  每日選股", "▤  歷史研究"])
 
 with tab1:
     section("01", "今日 FIRE × TDCC 精選")
@@ -406,9 +392,13 @@ with tab2:
     agreement = ("同向" if fire == "FIRE" and trend_raw == "ACCUMULATING" else
                  "分歧" if fire == "FIRE" and trend_raw == "DISTRIBUTING" else
                  "資料不足" if sr is None or tr is None else "待確認")
-    st.markdown(f'<div class="radar-hero"><div class="radar-eyebrow">STOCK INTELLIGENCE / {escape(stock_id)}</div><h2>{escape(stock_id)}　{escape(name)}</h2><div class="radar-muted">股價：{datefmt(pr.iloc[-1]["date"]) if not pr.empty else "—"}　｜　FIRE：{datefmt(safeval(sr,"date"))}　｜　TDCC：{datefmt(safeval(tr,"date"))}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="instrument-header"><div><div class="instrument-overline">EQUITY / TWSE · {escape(stock_id)}</div><div class="instrument-title">{escape(stock_id)} <span>{escape(name)}</span></div><div class="instrument-date">PRICE {datefmt(pr.iloc[-1]["date"]) if not pr.empty else "—"}　·　FIRE {datefmt(safeval(sr,"date"))}　·　TDCC {datefmt(safeval(tr,"date"))}</div></div><div class="instrument-price"><div class="price-caption">LAST CLOSE · TWD</div><div class="price-number">{fmt(close)}</div><div class="price-delta {sign_class(change)}">{f"{change:+.2f}%" if change is not None else "—"} / 前一交易日</div></div></div>', unsafe_allow_html=True)
 
-    section("01", "市場總覽 / MARKET OVERVIEW")
+    section("01", "PRICE ACTION / 核心技術圖表")
+    st.markdown('<div class="chart-head"><span class="chart-head-main">PRICE INTELLIGENCE</span><span class="chart-head-sub">MA 5 / 10 / 20　·　BOLL 20 / 2　·　VOL　·　RSI 14</span></div>', unsafe_allow_html=True)
+    price_chart(pr)
+
+    section("02", "SIGNAL SNAPSHOT / 決策快照")
     c1,c2,c3,c4col = st.columns(4)
     with c1: panel("最新收盤價", fmt(close,2," 元"), f"較前一交易日 {change:+.2f}%" if change is not None else "無前日資料",sign_class(change))
     with c2: panel("FIRE 技術訊號", SIGNAL.get(fire,fire), "來源：歷史技術訊號")
@@ -426,12 +416,7 @@ with tab2:
     st.markdown('<div class="radar-verdict"><strong>綜合判讀</strong>　'+escape(verdict)+'</div>',unsafe_allow_html=True)
     st.caption("本判讀為透明規則式整理，不是 AI 股價預測或買賣建議；不同資料的更新日期可能不同。")
 
-    section("02", "專業行情主圖 / CHART TERMINAL")
-    st.markdown("#### MARKET CHART  /  股價與技術分析")
-    st.caption("PRICE · MA 5/10/20 · BOLL 20/2 · VOLUME · RSI 14　｜　依歷史資料計算，非即時行情")
-    price_chart(pr)
-
-    section("03", "投資決策模組 / SIGNAL INTELLIGENCE")
+    section("03", "RESEARCH PANELS / 交叉證據")
     evidence_left, evidence_right = st.columns(2, gap="large")
     with evidence_left:
         st.markdown("#### 🔥 FIRE 技術動能")
@@ -508,4 +493,4 @@ with tab3:
         display_table(h)
 
 st.divider()
-st.caption("Taiwan Stock Radar v3.0 專業混合終端測試版｜僅供研究參考，不構成投資建議。")
+st.caption("Taiwan Stock Radar v4.0 Investment Workspace 測試版｜僅供研究參考，不構成投資建議。")
