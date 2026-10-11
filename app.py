@@ -1,4 +1,5 @@
 from pathlib import Path
+from html import escape
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -78,7 +79,19 @@ def display_table(df, columns=None):
             d[c] = d[c].map(lambda v: SIGNAL.get(str(v).upper(), str(v)) if pd.notna(v) else "—")
         elif c not in ("stock_id", "stock_name", "hot_flag") and pd.api.types.is_numeric_dtype(d[c]):
             d[c] = d[c].round(2)
-    st.dataframe(d.rename(columns=LABELS), use_container_width=True, hide_index=True)
+    d = d.rename(columns=LABELS)
+    # HTML 表格讓深色配色可控，避免 Streamlit dataframe 自帶亮色背景。
+    headers = "".join(f"<th>{escape(str(c))}</th>" for c in d.columns)
+    body = "".join(
+        "<tr>" + "".join(
+            f"<td>{escape('—' if pd.isna(v) else str(v))}</td>" for v in row
+        ) + "</tr>" for row in d.itertuples(index=False, name=None)
+    )
+    st.markdown(
+        '<div class="radar-table-scroll"><table class="radar-table"><thead><tr>'
+        + headers + '</tr></thead><tbody>' + body + '</tbody></table></div>',
+        unsafe_allow_html=True,
+    )
 
 def metric_row(items):
     cols = st.columns(len(items))
@@ -148,8 +161,10 @@ def price_chart(rows):
 
 st.markdown("""
 <style>
-html, body, [class*="css"], .stApp {
-  font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", Arial, sans-serif;
+/* 僅設定內容文字，不覆寫 Streamlit Material Symbols 圖示字型。 */
+.stApp, .stApp p, .stApp h1, .stApp h2, .stApp h3,
+.stApp label, .stApp button, .stApp [data-testid="stMetric"] {
+  font-family: Arial, "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
 }
 .stApp {background:linear-gradient(150deg,#081120,#0a1628 60%,#0c1b2e);color:#e8f1ff}
 [data-testid="stSidebar"] {background:#0e1c2f;border-right:1px solid #283b52}
@@ -163,12 +178,24 @@ h1 {font-size:2rem!important} h2 {font-size:1.5rem!important} h3 {font-size:1.18
 .stTabs [data-baseweb="tab"] {color:#d3e2f6;padding:10px 15px}
 .stTabs [aria-selected="true"] {color:#fff;border-bottom:2px solid #60a5fa}
 [data-testid="stExpander"] {background:#122138;border:1px solid #2b405c;border-radius:10px}
-[data-testid="stExpander"] summary {color:#e4efff!important}
+[data-testid="stExpander"] summary {background:#14253b!important;color:#eaf3ff!important;border-radius:9px}
+[data-testid="stExpander"] summary p {color:#eaf3ff!important;font-weight:600}
+[data-testid="stExpander"] [data-testid="stExpanderDetails"] {background:#101e32}
+[data-testid="stExpander"] svg {color:#d8e7fa}
 [data-testid="stDataFrame"] {border:1px solid #30455d;border-radius:10px;overflow:hidden}
 [data-testid="stMarkdownContainer"] p {line-height:1.65}
 div[data-testid="stVerticalBlock"] {gap:.7rem}
 hr {border-color:#263950}
-[data-testid="stAlert"] {border-radius:10px}
+[data-testid="stAlert"] {border-radius:10px;background:#132944!important;border:1px solid #28537d}
+[data-testid="stAlert"] p, [data-testid="stAlert"] strong {color:#eaf5ff!important}
+[data-testid="stCaptionContainer"] p, .stApp small {color:#b8cbe1!important}
+.stApp [data-testid="stRadio"] label p {color:#d7e7fb!important}
+.radar-table-scroll {overflow:auto;max-height:430px;border:1px solid #30465e;border-radius:10px;margin:8px 0 15px;background:#111f32}
+.radar-table {border-collapse:separate;border-spacing:0;width:100%;min-width:560px;color:#e4eefc;font-size:13px}
+.radar-table th {position:sticky;top:0;background:#1b304b;color:#edf5ff;font-weight:700;text-align:left;padding:12px;border-bottom:1px solid #38526d;white-space:nowrap}
+.radar-table td {background:#111f32;color:#e3edf9;padding:11px 12px;border-bottom:1px solid #263950;white-space:nowrap}
+.radar-table tbody tr:nth-child(even) td {background:#17283e}
+.radar-table tbody tr:hover td {background:#223b56}
 </style>
 """, unsafe_allow_html=True)
 
@@ -323,16 +350,16 @@ with tab2:
                     ("RSI (14)", fmt(ir.get("rsi14"))), ("突破距離", fmt(ir.get("breakout_distance_pct"), 2, "%"))])
     else:
         st.info("此股票目前沒有技術指標報表。")
-    with st.expander("📋 查看技術指標原始資料"):
+    with st.expander("📋 查看技術指標原始資料", expanded=False):
         display_table(stock_rows(indicators, stock_id),
                       ["date", "close", "ma10", "ma20", "rsi14", "volume_ratio", "breakout_distance_pct"])
-    with st.expander("🔥 查看 FIRE 歷史技術訊號"):
+    with st.expander("🔥 查看 FIRE 歷史技術訊號", expanded=False):
         display_table(stock_rows(signals, stock_id),
                       ["date", "close", "signal", "rsi14", "volume_ratio", "rank_score"])
-    with st.expander("🏦 查看 TDCC 籌碼分析明細"):
+    with st.expander("🏦 查看 TDCC 籌碼分析明細", expanded=False):
         display_table(stock_rows(tdcc, stock_id),
                       ["date", "big_holder_pct", "change_4w_pp", "change_12w_pp", "trend"])
-    with st.expander("📈 查看 TDCC 每週持股紀錄"):
+    with st.expander("📈 查看 TDCC 每週持股紀錄", expanded=False):
         display_table(wr, ["date", "big_holder_pct"])
 
 with tab3:
