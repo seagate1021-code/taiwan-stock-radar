@@ -2,6 +2,7 @@ from pathlib import Path
 from html import escape
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit as st
 
 st.set_page_config(page_title="Taiwan Stock Radar", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
@@ -110,90 +111,105 @@ def chart_style(fig, height=300, showlegend=False):
     return fig
 
 def price_chart(rows):
-    if rows.empty:
+    """股價、成交量與 RSI 共用日期軸的三層技術分析圖。"""
+    if rows.empty or not {"date", "close"}.issubset(rows.columns):
         st.info("目前沒有這檔股票的歷史股價。")
         return
     p = rows.copy()
-    p["close"] = num(p["close"])
-    p = p.dropna(subset=["date", "close"]).sort_values("date")
+    p["date"] = pd.to_datetime(p["date"], errors="coerce")
+    p["close"] = pd.to_numeric(p["close"], errors="coerce")
+    p = (p.dropna(subset=["date", "close"])
+           .sort_values("date").drop_duplicates("date", keep="last"))
     if p.empty:
         st.info("目前沒有有效的收盤價資料。")
         return
-    period = st.radio("股價圖時間區間", ["近 1 個月", "近 3 個月", "近 6 個月", "近 1 年", "全部"],
+
+    period = st.radio("技術分析時間區間", ["近 1 個月", "近 3 個月", "近 6 個月", "近 1 年", "全部"],
                       index=2, horizontal=True, key="v12_period")
     days = {"近 1 個月": 30, "近 3 個月": 90, "近 6 個月": 180, "近 1 年": 365}
-    start = p["date"].max() - pd.Timedelta(days=days[period]) if period in days else None
-    fig = go.Figure()
-    ohlc = {"open", "high", "low", "close"}.issubset(p.columns)
-    if ohlc and p[["open", "high", "low", "close"]].apply(pd.to_numeric, errors="coerce").notna().all(axis=1).any():
-        k = p.dropna(subset=["open", "high", "low", "close"])
-        fig.add_trace(go.Candlestick(x=k["date"], open=k["open"], high=k["high"], low=k["low"],
-                                     close=k["close"], name="K 線",
-                                     increasing_line_color="#ef5350", decreasing_line_color="#2dd4bf"))
-        fig.update_xaxes(rangeslider_visible=False)
-    else:
-        fig.add_trace(go.Scatter(x=p["date"], y=p["close"], name="收盤價",
-                                 line=dict(color="#80a7ff", width=2.5)))
-    for n, color in [(5, "#ffbd69"), (10, "#52d6a4"), (20, "#fa777b")]:
-        if len(p) >= n:
-            fig.add_trace(go.Scatter(x=p["date"], y=p["close"].rolling(n).mean(),
-                                     name=f"MA{n}", line=dict(color=color, width=1.6)))
-    chart_style(fig, 365, True)
-    fig.update_layout(legend=dict(orientation="h", y=1.12, x=0, font=dict(color="#e5efff")))
-    if start is not None:
-        fig.update_xaxes(range=[start, p["date"].max()])
-    st.plotly_chart(fig, use_container_width=True)
-    if "volume" in p.columns:
-        v = p.copy()
-        v["volume"] = num(v["volume"])
-        v = v.dropna(subset=["volume"])
-        if not v.empty:
-            prior = v["close"].shift(1)
-            colors = ["#ef5350" if pd.notna(old) and new >= old else "#2dd4bf"
-                      for new, old in zip(v["close"], prior)]
-            vf = go.Figure(go.Bar(x=v["date"], y=v["volume"], marker_color=colors, name="成交量"))
-            chart_style(vf, 155)
-            vf.update_yaxes(tickformat="~s")
-            if start is not None:
-                vf.update_xaxes(range=[start, p["date"].max()])
-            st.caption("每日成交量｜單位依原始 CSV 資料")
-            st.plotly_chart(vf, use_container_width=True)
+    start = p["date"].max() - pd.Timedelta(days=days[period]) if period in days else p["date"].min()
+    end = p["date"].max() + pd.Timedelta(days=2)
 
-    # RSI(14) 使用完整歷史收盤價計算，再依選定區間顯示，避免期間起點失真。
+    # 指標以完整歷史計算，再截取選定期間，避免移動平均線與 RSI 在區間起點重算。
+    for n in (5, 10, 20):
+        p[f"ma{n}"] = p["close"].rolling(n, min_periods=n).mean()
     delta = p["close"].diff()
-    gains = delta.clip(lower=0)
-    losses = (-delta).clip(lower=0)
-    avg_gain = gains.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
-    avg_loss = losses.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.ewm(alpha=1/14, adjust=False, min_periods=14).mean()
+    avg_loss = loss.ewm(alpha=1/14, adjust=False, min_periods=14).mean()
     rs = avg_gain / avg_loss.replace(0, float("nan"))
-    rsi_values = 100 - (100 / (1 + rs))
-    rsi_values = rsi_values.mask((avg_loss == 0) & (avg_gain > 0), 100)
-    rsi_values = rsi_values.mask((avg_gain == 0) & (avg_loss > 0), 0)
-    rsi_values = rsi_values.mask((avg_gain == 0) & (avg_loss == 0), 50)
-    rsi_data = pd.DataFrame({"date": p["date"], "rsi": rsi_values}).dropna(subset=["rsi"])
-    st.markdown("##### RSI (14) 相對強弱指標")
-    if rsi_data.empty:
-        st.info("歷史收盤價不足 15 筆，暫時無法繪製 RSI(14) 走勢。")
+    p["rsi14_chart"] = 100 - 100 / (1 + rs)
+    p.loc[(avg_loss == 0) & (avg_gain > 0), "rsi14_chart"] = 100
+    p.loc[(avg_gain == 0) & (avg_loss > 0), "rsi14_chart"] = 0
+    p.loc[(avg_gain == 0) & (avg_loss == 0), "rsi14_chart"] = 50
+
+    visible = p.loc[p["date"] >= start].copy()
+    has_volume = "volume" in p.columns and pd.to_numeric(visible["volume"], errors="coerce").notna().any()
+    if has_volume:
+        p["volume"] = pd.to_numeric(p["volume"], errors="coerce")
+        visible = p.loc[p["date"] >= start].copy()
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
+                        row_heights=[0.55, 0.19, 0.26], vertical_spacing=0.055)
+    ohlc = {"open", "high", "low", "close"}.issubset(p.columns)
+    if ohlc:
+        for field in ("open", "high", "low"):
+            visible[field] = pd.to_numeric(visible[field], errors="coerce")
+        candles = visible.dropna(subset=["open", "high", "low", "close"])
     else:
-        rf = go.Figure()
-        rf.add_trace(go.Scatter(
-            x=rsi_data["date"], y=rsi_data["rsi"], name="RSI (14)",
-            mode="lines", line=dict(color="#a78bfa", width=2.5),
-            hovertemplate="%{x|%Y-%m-%d}<br>RSI：%{y:.2f}<extra></extra>"
-        ))
-        for level, color, label in [(70, "#fb7185", "70 超買參考"),
-                                    (50, "#94a3b8", "50 中線"),
-                                    (30, "#34d399", "30 超賣參考")]:
-            rf.add_hline(y=level, line_dash="dash", line_width=1,
-                         line_color=color, annotation_text=label,
-                         annotation_position="top right",
-                         annotation_font_color=color)
-        chart_style(rf, 225)
-        rf.update_yaxes(range=[0, 100], dtick=20)
-        if start is not None:
-            rf.update_xaxes(range=[start, p["date"].max()])
-        st.plotly_chart(rf, use_container_width=True)
-        st.caption("RSI 依歷史收盤價以 Wilder 平滑方式計算；70／30 為常見觀察參考值，不代表必然反轉。")
+        candles = pd.DataFrame()
+    if not candles.empty and len(candles) == len(visible):
+        fig.add_trace(go.Candlestick(x=candles["date"], open=candles["open"],
+            high=candles["high"], low=candles["low"], close=candles["close"],
+            name="K 線", increasing_line_color="#f87171", decreasing_line_color="#2dd4bf"), row=1, col=1)
+    else:
+        fig.add_trace(go.Scatter(x=visible["date"], y=visible["close"], name="收盤價",
+            mode="lines", line=dict(color="#80a7ff", width=2.4)), row=1, col=1)
+    for n, color in ((5, "#ffbd69"), (10, "#52d6a4"), (20, "#fa777b")):
+        fig.add_trace(go.Scatter(x=visible["date"], y=visible[f"ma{n}"], name=f"MA{n}",
+            mode="lines", line=dict(color=color, width=1.5),
+            hovertemplate=f"%{{x|%Y-%m-%d}}<br>MA{n}：%{{y:,.2f}}<extra></extra>"), row=1, col=1)
+
+    if has_volume:
+        prev_close = p["close"].shift(1).reindex(visible.index)
+        bar_colors = ["#f87171" if pd.notna(prev) and current >= prev else "#2dd4bf"
+                      for current, prev in zip(visible["close"], prev_close)]
+        fig.add_trace(go.Bar(x=visible["date"], y=visible["volume"], name="成交量",
+            marker_color=bar_colors, showlegend=False,
+            hovertemplate="%{x|%Y-%m-%d}<br>成交量：%{y:,.0f}<extra></extra>"), row=2, col=1)
+    else:
+        fig.add_annotation(x=0.5, y=0.29, xref="paper", yref="paper", text="無成交量資料",
+                           showarrow=False, font=dict(color="#9cb0c8", size=12))
+
+    fig.add_trace(go.Scatter(x=visible["date"], y=visible["rsi14_chart"],
+        name="RSI (14)", mode="lines", line=dict(color="#b39aff", width=2.2),
+        hovertemplate="%{x|%Y-%m-%d}<br>RSI (14)：%{y:.2f}<extra></extra>"), row=3, col=1)
+    for level, color in ((70, "#fb7185"), (50, "#94a3b8"), (30, "#34d399")):
+        fig.add_hline(y=level, row=3, col=1, line_color=color, line_width=1,
+                      line_dash="dash", opacity=0.8)
+        fig.add_annotation(x=1, y=level, xref="x3 domain", yref="y3",
+                           text=str(level), xanchor="right", yanchor="bottom",
+                           showarrow=False, font=dict(color=color, size=11), bgcolor="#101b2d")
+
+    fig.update_layout(template="plotly_dark", height=760, autosize=True,
+        paper_bgcolor="#101b2d", plot_bgcolor="#101b2d",
+        font=dict(color="#d9e6f7", family="Arial, sans-serif", size=12),
+        margin=dict(l=14, r=18, t=68, b=20), hovermode="x unified",
+        legend=dict(orientation="h", y=1.075, x=0, font=dict(color="#e5efff", size=11)),
+        bargap=0.16, dragmode="pan")
+    fig.update_xaxes(showgrid=True, gridcolor="#26384e", zeroline=False,
+                     tickfont=dict(color="#b5c8df"), range=[start, end],
+                     rangeslider_visible=False)
+    fig.update_xaxes(showticklabels=False, row=1, col=1)
+    fig.update_xaxes(showticklabels=False, row=2, col=1)
+    fig.update_xaxes(tickformat="%Y-%m-%d", nticks=7, row=3, col=1)
+    fig.update_yaxes(showgrid=True, gridcolor="#26384e", zeroline=False,
+                     tickfont=dict(color="#b5c8df"))
+    fig.update_yaxes(tickformat="~s", row=2, col=1)
+    fig.update_yaxes(range=[0, 100], dtick=20, row=3, col=1)
+    st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": False})
+    st.caption("上：股價與均線｜中：每日成交量（單位依原始 CSV）｜下：RSI(14)，70／30 為參考區間。"
+               "三圖共用日期軸；RSI 以歷史收盤價計算，前 14 筆資料不顯示數值。")
 
 st.markdown("""
 <style>
