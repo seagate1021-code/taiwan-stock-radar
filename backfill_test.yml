@@ -1,0 +1,35 @@
+
+name: TWSE Historical Backfill Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backfill_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run independent backfill test
+        run: python src/backfill_twse_test.py
+
+      - name: Upload test CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: twse-backfill-test
+          path: data/backfill_test/twse_daily_backfill.csv
+          if-no-files-found: warn
