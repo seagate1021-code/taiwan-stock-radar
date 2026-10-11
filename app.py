@@ -133,6 +133,10 @@ def price_chart(rows):
     # 指標以完整歷史計算，再截取選定期間，避免移動平均線與 RSI 在區間起點重算。
     for n in (5, 10, 20):
         p[f"ma{n}"] = p["close"].rolling(n, min_periods=n).mean()
+    # 布林通道：20 日簡單移動平均 ± 2 倍母體標準差。
+    bb_std = p["close"].rolling(20, min_periods=20).std(ddof=0)
+    p["bb_upper"] = p["ma20"] + 2 * bb_std
+    p["bb_lower"] = p["ma20"] - 2 * bb_std
     delta = p["close"].diff()
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
@@ -150,7 +154,7 @@ def price_chart(rows):
         p["volume"] = pd.to_numeric(p["volume"], errors="coerce")
         visible = p.loc[p["date"] >= start].copy()
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
-                        row_heights=[0.55, 0.19, 0.26], vertical_spacing=0.055)
+                        row_heights=[0.62, 0.16, 0.22], vertical_spacing=0.035)
     ohlc = {"open", "high", "low", "close"}.issubset(p.columns)
     if ohlc:
         for field in ("open", "high", "low"):
@@ -169,6 +173,15 @@ def price_chart(rows):
         fig.add_trace(go.Scatter(x=visible["date"], y=visible[f"ma{n}"], name=f"MA{n}",
             mode="lines", line=dict(color=color, width=1.5),
             hovertemplate=f"%{{x|%Y-%m-%d}}<br>MA{n}：%{{y:,.2f}}<extra></extra>"), row=1, col=1)
+
+    # BOLL 上下軌疊加於股價主圖；先下軌再上軌，利用 tonexty 填色。
+    fig.add_trace(go.Scatter(x=visible["date"], y=visible["bb_lower"],
+        name="BOLL 下軌", mode="lines", line=dict(color="#8e9bbd", width=1.2, dash="dot"),
+        hovertemplate="%{x|%Y-%m-%d}<br>BOLL 下軌：%{y:,.2f}<extra></extra>"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=visible["date"], y=visible["bb_upper"],
+        name="BOLL 上軌", mode="lines", line=dict(color="#8e9bbd", width=1.2, dash="dot"),
+        fill="tonexty", fillcolor="rgba(142,155,189,0.10)",
+        hovertemplate="%{x|%Y-%m-%d}<br>BOLL 上軌：%{y:,.2f}<extra></extra>"), row=1, col=1)
 
     if has_volume:
         prev_close = p["close"].shift(1).reindex(visible.index)
@@ -191,7 +204,7 @@ def price_chart(rows):
                            text=str(level), xanchor="right", yanchor="bottom",
                            showarrow=False, font=dict(color=color, size=11), bgcolor="#101b2d")
 
-    fig.update_layout(template="plotly_dark", height=760, autosize=True,
+    fig.update_layout(template="plotly_dark", height=720, autosize=True,
         paper_bgcolor="#101b2d", plot_bgcolor="#101b2d",
         font=dict(color="#d9e6f7", family="Arial, sans-serif", size=12),
         margin=dict(l=14, r=18, t=68, b=20), hovermode="x unified",
@@ -208,8 +221,8 @@ def price_chart(rows):
     fig.update_yaxes(tickformat="~s", row=2, col=1)
     fig.update_yaxes(range=[0, 100], dtick=20, row=3, col=1)
     st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": False})
-    st.caption("上：股價與均線｜中：每日成交量（單位依原始 CSV）｜下：RSI(14)，70／30 為參考區間。"
-               "三圖共用日期軸；RSI 以歷史收盤價計算，前 14 筆資料不顯示數值。")
+    st.caption("主圖：收盤價、MA5／MA10／MA20、布林通道（20 日均線 ± 2 倍標準差）｜下方：成交量及 RSI(14)。"
+               "共用日期軸；BOLL 前 19 筆及 RSI 前 14 筆歷史資料不顯示數值。")
 
 st.markdown("""
 <style>
@@ -310,7 +323,7 @@ chosen = st.sidebar.selectbox("今日精選股票", choices)
 stock_id = typed if chosen == "自行輸入" else chosen.split()[0]
 st.sidebar.divider()
 st.sidebar.caption("資料由 GitHub Actions 每日產生，非即時行情")
-st.sidebar.caption("v2.0 RSI 整合測試版｜選股策略及資料管線維持不變")
+st.sidebar.caption("v2.0 BOLL 疊圖測試版｜選股策略及資料管線維持不變")
 
 st.markdown('<div class="radar-eyebrow">TAIWAN STOCK RADAR · RESEARCH TERMINAL</div>', unsafe_allow_html=True)
 st.title("📈 Taiwan Stock Radar")
@@ -461,4 +474,4 @@ with tab3:
         display_table(h)
 
 st.divider()
-st.caption("Taiwan Stock Radar v2.0 RSI 整合測試版｜僅供研究參考，不構成投資建議。")
+st.caption("Taiwan Stock Radar v2.0 BOLL 疊圖測試版｜僅供研究參考，不構成投資建議。")
