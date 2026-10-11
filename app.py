@@ -272,8 +272,24 @@ st.markdown(
     
 <style>
 /* ===== 台灣繁體中文字型與一致性 ===== */
-html, body, [class*="css"], .stApp, .stApp * {
-    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", "Heiti TC", sans-serif !important;
+html, body, .stApp {
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", "Heiti TC", sans-serif;
+}
+/* 只設定文字元件，不覆蓋 Streamlit 的 Material Symbols 圖示字型。 */
+.stApp h1, .stApp h2, .stApp h3, .stApp h4,
+.stApp p, .stApp label, .stApp button,
+.stApp [data-testid="stMetricLabel"],
+.stApp [data-testid="stMetricValue"] {
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+}
+.stApp .material-symbols-rounded,
+.stApp .material-symbols-outlined,
+.stApp [data-testid="stIconMaterial"] {
+    font-family: "Material Symbols Rounded", "Material Symbols Outlined" !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    letter-spacing: normal !important;
+    white-space: nowrap;
 }
 .stApp [data-testid="stCaptionContainer"] { color: #aebfda !important; }
 .stApp [data-testid="stMarkdownContainer"] { line-height: 1.65; }
