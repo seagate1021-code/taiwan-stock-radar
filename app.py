@@ -111,7 +111,7 @@ def chart_style(fig, height=300, showlegend=False):
     return fig
 
 def price_chart(rows):
-    """股價、成交量與 RSI 共用日期軸的三層技術分析圖。"""
+    """完整歷史計算指標、共用時間軸的專業技術分析組合圖。"""
     if rows.empty or not {"date", "close"}.issubset(rows.columns):
         st.info("目前沒有這檔股票的歷史股價。")
         return
@@ -154,7 +154,7 @@ def price_chart(rows):
         p["volume"] = pd.to_numeric(p["volume"], errors="coerce")
         visible = p.loc[p["date"] >= start].copy()
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
-                        row_heights=[0.62, 0.16, 0.22], vertical_spacing=0.035)
+                        row_heights=[0.66, 0.14, 0.20], vertical_spacing=0.028)
     ohlc = {"open", "high", "low", "close"}.issubset(p.columns)
     if ohlc:
         for field in ("open", "high", "low"):
@@ -168,20 +168,26 @@ def price_chart(rows):
             name="K 線", increasing_line_color="#f87171", decreasing_line_color="#2dd4bf"), row=1, col=1)
     else:
         fig.add_trace(go.Scatter(x=visible["date"], y=visible["close"], name="收盤價",
-            mode="lines", line=dict(color="#80a7ff", width=2.4)), row=1, col=1)
+            mode="lines", line=dict(color="#83b4ff", width=3.0)), row=1, col=1)
     for n, color in ((5, "#ffbd69"), (10, "#52d6a4"), (20, "#fa777b")):
         fig.add_trace(go.Scatter(x=visible["date"], y=visible[f"ma{n}"], name=f"MA{n}",
-            mode="lines", line=dict(color=color, width=1.5),
+            mode="lines", line=dict(color=color, width=1.35),
             hovertemplate=f"%{{x|%Y-%m-%d}}<br>MA{n}：%{{y:,.2f}}<extra></extra>"), row=1, col=1)
 
-    # BOLL 上下軌疊加於股價主圖；先下軌再上軌，利用 tonexty 填色。
-    fig.add_trace(go.Scatter(x=visible["date"], y=visible["bb_lower"],
-        name="BOLL 下軌", mode="lines", line=dict(color="#8e9bbd", width=1.2, dash="dot"),
-        hovertemplate="%{x|%Y-%m-%d}<br>BOLL 下軌：%{y:,.2f}<extra></extra>"), row=1, col=1)
-    fig.add_trace(go.Scatter(x=visible["date"], y=visible["bb_upper"],
-        name="BOLL 上軌", mode="lines", line=dict(color="#8e9bbd", width=1.2, dash="dot"),
-        fill="tonexty", fillcolor="rgba(142,155,189,0.10)",
-        hovertemplate="%{x|%Y-%m-%d}<br>BOLL 上軌：%{y:,.2f}<extra></extra>"), row=1, col=1)
+    # 布林通道：降低填色透明度；上、下軌同屬一組圖例，主圖以價格為視覺重心。
+    fig.add_trace(go.Scatter(
+        x=visible["date"], y=visible["bb_lower"], name="布林通道",
+        legendgroup="boll", showlegend=True, mode="lines",
+        line=dict(color="#7d91b2", width=1.1, dash="dot"),
+        hovertemplate="%{x|%Y-%m-%d}<br>布林下軌：%{y:,.2f}<extra></extra>"
+    ), row=1, col=1)
+    fig.add_trace(go.Scatter(
+        x=visible["date"], y=visible["bb_upper"], name="布林上軌",
+        legendgroup="boll", showlegend=False, mode="lines",
+        line=dict(color="#7d91b2", width=1.1, dash="dot"),
+        fill="tonexty", fillcolor="rgba(125,145,178,0.045)",
+        hovertemplate="%{x|%Y-%m-%d}<br>布林上軌：%{y:,.2f}<extra></extra>"
+    ), row=1, col=1)
 
     if has_volume:
         prev_close = p["close"].shift(1).reindex(visible.index)
@@ -204,11 +210,12 @@ def price_chart(rows):
                            text=str(level), xanchor="right", yanchor="bottom",
                            showarrow=False, font=dict(color=color, size=11), bgcolor="#101b2d")
 
-    fig.update_layout(template="plotly_dark", height=720, autosize=True,
+    fig.update_layout(template="plotly_dark", height=760, autosize=True,
         paper_bgcolor="#101b2d", plot_bgcolor="#101b2d",
         font=dict(color="#d9e6f7", family="Arial, sans-serif", size=12),
-        margin=dict(l=14, r=18, t=68, b=20), hovermode="x unified",
-        legend=dict(orientation="h", y=1.075, x=0, font=dict(color="#e5efff", size=11)),
+        margin=dict(l=14, r=18, t=72, b=20), hovermode="x unified",
+        legend=dict(orientation="h", y=1.06, x=0, font=dict(color="#e5efff", size=11),
+                     bgcolor="rgba(16,27,45,0)", traceorder="normal"),
         bargap=0.16, dragmode="pan")
     fig.update_xaxes(showgrid=True, gridcolor="#26384e", zeroline=False,
                      tickfont=dict(color="#b5c8df"), range=[start, end],
@@ -218,8 +225,9 @@ def price_chart(rows):
     fig.update_xaxes(tickformat="%Y-%m-%d", nticks=7, row=3, col=1)
     fig.update_yaxes(showgrid=True, gridcolor="#26384e", zeroline=False,
                      tickfont=dict(color="#b5c8df"))
-    fig.update_yaxes(tickformat="~s", row=2, col=1)
+    fig.update_yaxes(tickformat="~s", nticks=4, row=2, col=1)
     fig.update_yaxes(range=[0, 100], dtick=20, row=3, col=1)
+    fig.update_traces(hoverlabel=dict(bgcolor="#192e47", font_color="#eef6ff"))
     st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": False})
     st.caption("主圖：收盤價、MA5／MA10／MA20、布林通道（20 日均線 ± 2 倍標準差）｜下方：成交量及 RSI(14)。"
                "共用日期軸；BOLL 前 19 筆及 RSI 前 14 筆歷史資料不顯示數值。")
@@ -323,7 +331,7 @@ chosen = st.sidebar.selectbox("今日精選股票", choices)
 stock_id = typed if chosen == "自行輸入" else chosen.split()[0]
 st.sidebar.divider()
 st.sidebar.caption("資料由 GitHub Actions 每日產生，非即時行情")
-st.sidebar.caption("v2.0 BOLL 疊圖測試版｜選股策略及資料管線維持不變")
+st.sidebar.caption("v2.0 技術圖表精修測試版｜選股策略及資料管線維持不變")
 
 st.markdown('<div class="radar-eyebrow">TAIWAN STOCK RADAR · RESEARCH TERMINAL</div>', unsafe_allow_html=True)
 st.title("📈 Taiwan Stock Radar")
@@ -400,7 +408,7 @@ with tab2:
     section("02", "市場走勢與交叉證據")
     left,right = st.columns([1.7,1],gap="large")
     with left:
-        st.markdown("#### 📈 股價與移動平均線")
+        st.markdown("#### 📈 股價・均線・布林通道・成交量・RSI")
         price_chart(pr)
     with right:
         st.markdown("#### 🔥 FIRE 技術動能")
@@ -474,4 +482,4 @@ with tab3:
         display_table(h)
 
 st.divider()
-st.caption("Taiwan Stock Radar v2.0 BOLL 疊圖測試版｜僅供研究參考，不構成投資建議。")
+st.caption("Taiwan Stock Radar v2.0 技術圖表精修測試版｜僅供研究參考，不構成投資建議。")
