@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-st.set_page_config(page_title="Taiwan Stock Radar", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Taiwan Stock Radar | Pro Terminal", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
 
 HISTORY_PATH = Path("data/history/twse_daily.csv")
 PICKS_PATH = Path("data/history/combined_top_picks.csv")
@@ -102,7 +102,7 @@ def metric_row(items):
 def chart_style(fig, height=300, showlegend=False):
     fig.update_layout(
         template="plotly_dark", height=height, paper_bgcolor="#101b2d",
-        plot_bgcolor="#101b2d", font=dict(color="#d9e6f7", family="Noto Sans TC, Microsoft JhengHei, sans-serif", size=12),
+        plot_bgcolor="#101b2d", font=dict(color="#d9e6f7", family="Arial, Microsoft JhengHei, sans-serif", size=12),
         margin=dict(l=12, r=12, t=22, b=16), showlegend=showlegend,
         xaxis=dict(title=None, gridcolor="#26384e", zeroline=False, tickfont=dict(color="#b5c8df")),
         yaxis=dict(title=None, gridcolor="#26384e", zeroline=False, tickfont=dict(color="#b5c8df")),
@@ -154,7 +154,7 @@ def price_chart(rows):
         p["volume"] = pd.to_numeric(p["volume"], errors="coerce")
         visible = p.loc[p["date"] >= start].copy()
     fig = make_subplots(rows=3, cols=1, shared_xaxes=True,
-                        row_heights=[0.66, 0.14, 0.20], vertical_spacing=0.028)
+                        row_heights=[0.69, 0.13, 0.18], vertical_spacing=0.028)
     ohlc = {"open", "high", "low", "close"}.issubset(p.columns)
     if ohlc:
         for field in ("open", "high", "low"):
@@ -210,11 +210,11 @@ def price_chart(rows):
                            text=str(level), xanchor="right", yanchor="bottom",
                            showarrow=False, font=dict(color=color, size=11), bgcolor="#101b2d")
 
-    fig.update_layout(template="plotly_dark", height=850, autosize=True,
+    fig.update_layout(template="plotly_dark", height=930, autosize=True,
         paper_bgcolor="#101b2d", plot_bgcolor="#101b2d",
-        font=dict(color="#d9e6f7", family="Noto Sans TC, Microsoft JhengHei, sans-serif", size=12),
-        margin=dict(l=14, r=18, t=72, b=20), hovermode="x unified",
-        legend=dict(orientation="h", y=1.06, x=0, font=dict(color="#e5efff", size=11),
+        font=dict(color="#d9e6f7", family="Arial, Microsoft JhengHei, sans-serif", size=12),
+        margin=dict(l=16, r=22, t=72, b=32), hovermode="x unified",
+        legend=dict(orientation="h", y=1.06, x=0, font=dict(color="#e5efff", size=12),
                      bgcolor="rgba(16,27,45,0)", traceorder="normal"),
         bargap=0.16, dragmode="pan")
     fig.update_xaxes(showgrid=True, gridcolor="#26384e", zeroline=False,
@@ -280,6 +280,27 @@ hr {border-color:#243d57}
 .radar-table tbody tr:nth-child(even) td {background:#17283e}
 .radar-table tbody tr:hover td {background:#223b56}
 @media(max-width:900px) {.block-container{padding-left:1rem;padding-right:1rem}.radar-hero{padding:14px}.radar-panel{padding:14px}}
+
+/* V3.0 design system: TradingView chart hierarchy + Bloomberg information architecture + Tabler surfaces */
+:root {color-scheme:dark}
+.stApp {background:linear-gradient(180deg,#07111e 0%,#0a1726 55%,#081421 100%)!important}
+.block-container {max-width:1840px!important;padding-top:1.35rem!important;padding-left:2.25rem!important;padding-right:2.25rem!important}
+.stApp, .stApp * {font-family:Arial,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+.stApp h1 {font-size:2.05rem!important;font-weight:800!important;letter-spacing:-.6px!important}
+.stApp h3 {font-size:1.08rem!important;font-weight:750!important}
+.radar-eyebrow {color:#72c8f5!important;font-weight:800!important;letter-spacing:2px!important}
+.radar-hero {background:linear-gradient(115deg,#152d49,#0d2035 65%,#10263e)!important;border:1px solid #345574!important;border-radius:14px!important;padding:23px 27px!important}
+.radar-section {margin-top:34px!important;color:#a3c7e6!important;font-size:.8rem!important;letter-spacing:1.1px!important}
+.radar-panel {min-height:130px!important;background:linear-gradient(160deg,#122941,#102238)!important;border:1px solid #304a65!important;border-radius:12px!important;padding:20px!important;box-shadow:0 4px 16px #00000014}
+.radar-panel-title {font-size:.79rem!important;letter-spacing:.3px!important}
+.radar-panel-main {font-size:clamp(1.35rem,2vw,1.85rem)!important;font-weight:800!important}
+.radar-verdict {background:#122a43!important;border-left:4px solid #59c5f3!important;padding:22px 25px!important;font-size:1.02rem!important}
+.radar-table-scroll {max-height:560px!important}
+.stTabs [data-baseweb="tab-list"] {gap:28px!important}
+.stTabs [data-baseweb="tab"] {font-weight:700!important;font-size:1rem!important}
+[data-testid="stPlotlyChart"] {border:1px solid #263f59;border-radius:13px;overflow:hidden;background:#101b2d;box-shadow:0 8px 32px #00000018}
+[data-testid="stRadio"] {padding:9px 0!important}
+@media(max-width:900px){.block-container{padding-left:1rem!important;padding-right:1rem!important}.radar-panel{padding:13px!important;min-height:100px!important}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -322,7 +343,7 @@ weekly = read_csv(TDCC_WEEKLY_PATH)
 signals = read_csv(SIGNALS_PATH)
 
 st.sidebar.title("🔎 股票搜尋")
-typed = st.sidebar.text_input("股票代號", value="3416", placeholder="例如 2330").strip()
+typed = st.sidebar.text_input("股票代號", value="2330", placeholder="例如 2330").strip()
 choices = ["自行輸入"]
 if not picks.empty and "stock_id" in picks.columns:
     for _, r in picks.iterrows():
@@ -331,7 +352,7 @@ chosen = st.sidebar.selectbox("今日精選股票", choices)
 stock_id = typed if chosen == "自行輸入" else chosen.split()[0]
 st.sidebar.divider()
 st.sidebar.caption("資料由 GitHub Actions 每日產生，非即時行情")
-st.sidebar.caption("v2.1 專業終端測試版｜選股策略及資料管線維持不變")
+st.sidebar.caption("v3.0 專業混合終端測試版｜選股策略及資料管線維持不變")
 
 st.markdown('<div class="radar-eyebrow">TAIWAN STOCK RADAR · RESEARCH TERMINAL</div>', unsafe_allow_html=True)
 st.title("📈 Taiwan Stock Radar")
@@ -387,7 +408,7 @@ with tab2:
                  "資料不足" if sr is None or tr is None else "待確認")
     st.markdown(f'<div class="radar-hero"><div class="radar-eyebrow">STOCK INTELLIGENCE / {escape(stock_id)}</div><h2>{escape(stock_id)}　{escape(name)}</h2><div class="radar-muted">股價：{datefmt(pr.iloc[-1]["date"]) if not pr.empty else "—"}　｜　FIRE：{datefmt(safeval(sr,"date"))}　｜　TDCC：{datefmt(safeval(tr,"date"))}</div></div>', unsafe_allow_html=True)
 
-    section("01", "決策快照")
+    section("01", "市場總覽 / MARKET OVERVIEW")
     c1,c2,c3,c4col = st.columns(4)
     with c1: panel("最新收盤價", fmt(close,2," 元"), f"較前一交易日 {change:+.2f}%" if change is not None else "無前日資料",sign_class(change))
     with c2: panel("FIRE 技術訊號", SIGNAL.get(fire,fire), "來源：歷史技術訊號")
@@ -405,12 +426,12 @@ with tab2:
     st.markdown('<div class="radar-verdict"><strong>綜合判讀</strong>　'+escape(verdict)+'</div>',unsafe_allow_html=True)
     st.caption("本判讀為透明規則式整理，不是 AI 股價預測或買賣建議；不同資料的更新日期可能不同。")
 
-    section("02", "核心技術分析終端")
-    st.markdown("#### 📈 股價主圖｜移動均線・布林通道・成交量・RSI")
-    st.caption("以股價為核心，三個區域共用日期軸。滑鼠移動可同時比對收盤價、量能與 RSI；選擇上方時間範圍檢視走勢。")
+    section("02", "專業行情主圖 / CHART TERMINAL")
+    st.markdown("#### MARKET CHART  /  股價與技術分析")
+    st.caption("PRICE · MA 5/10/20 · BOLL 20/2 · VOLUME · RSI 14　｜　依歷史資料計算，非即時行情")
     price_chart(pr)
 
-    section("03", "決策證據與籌碼交叉驗證")
+    section("03", "投資決策模組 / SIGNAL INTELLIGENCE")
     evidence_left, evidence_right = st.columns(2, gap="large")
     with evidence_left:
         st.markdown("#### 🔥 FIRE 技術動能")
@@ -432,7 +453,7 @@ with tab2:
         with b: panel("分析週數",fmt(safeval(tr,"period_count"),0),"資料覆蓋")
         st.caption(f"技術 × 籌碼交叉判讀：{agreement}｜籌碼方向：{trend}")
 
-    section("04", "大戶持股軌跡")
+    section("04", "籌碼歷史 / HOLDER TREND")
     if not wr.empty and {"date","big_holder_pct"}.issubset(wr.columns):
         wr["big_holder_pct"] = num(wr["big_holder_pct"])
         wr = wr.dropna(subset=["date","big_holder_pct"]).drop_duplicates("date",keep="last")
@@ -445,7 +466,7 @@ with tab2:
         else: st.info("目前沒有有效的 TDCC 每週資料。")
     else: st.info("目前沒有此股票的 TDCC 每週持股紀錄。")
 
-    section("05", "技術指標與風險觀察")
+    section("05", "風險雷達 / RISK MONITOR")
     a,b,c,d = st.columns(4)
     with a: panel("10 日均線",fmt(safeval(ir,"ma10")),"最新技術指標")
     with b: panel("20 日均線",fmt(safeval(ir,"ma20")),"最新技術指標")
@@ -460,7 +481,7 @@ with tab2:
     st.markdown('<div class="radar-verdict"><strong>風險觀察</strong>　'+escape(' '.join(warnings))+'</div>',unsafe_allow_html=True)
     st.caption("風險提示只依 RSI、持股變化及單日漲跌等可驗證條件產生，不是風險機率或價格預測。")
 
-    section("06", "研究資料庫")
+    section("06", "資料研究室 / RESEARCH DATA")
     st.caption("原始 CSV 資料完整保留，供追溯與驗證；以下表格可左右捲動。")
     with st.expander("📋 技術指標原始資料",expanded=False):
         display_table(stock_rows(indicators,stock_id),["date","close","ma10","ma20","rsi14","volume_ratio","breakout_distance_pct"])
@@ -487,4 +508,4 @@ with tab3:
         display_table(h)
 
 st.divider()
-st.caption("Taiwan Stock Radar v2.1 專業終端測試版｜僅供研究參考，不構成投資建議。")
+st.caption("Taiwan Stock Radar v3.0 專業混合終端測試版｜僅供研究參考，不構成投資建議。")
