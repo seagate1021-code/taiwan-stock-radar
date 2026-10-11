@@ -161,9 +161,9 @@ def show_price_chart(stock_prices):
         margin=dict(l=10, r=10, t=20, b=10),
         paper_bgcolor="#101827",
         plot_bgcolor="#101827",
-        xaxis_title="日期",
-        yaxis_title="價格（元）",
-        legend=dict(orientation="h", y=1.12),
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(orientation="h", y=1.13, x=0, font=dict(color="#eaf1ff")),
         font=dict(color="#dce7f7"),
         xaxis=dict(gridcolor="#26374f", tickfont=dict(color="#a9bdd8")),
         yaxis=dict(gridcolor="#26374f", tickfont=dict(color="#a9bdd8")),
@@ -206,8 +206,8 @@ def show_price_chart(stock_prices):
                 paper_bgcolor="#101827",
                 plot_bgcolor="#101827",
                 font=dict(color="#dce7f7"),
-                xaxis_title="日期",
-                yaxis_title="成交量（原始資料單位）",
+                xaxis_title=None,
+                yaxis_title=None,
                 showlegend=False,
                 xaxis=dict(
                     tickfont=dict(color="#a9bdd8"),
@@ -224,10 +224,59 @@ def show_price_chart(stock_prices):
                 )
             st.plotly_chart(volume_fig, use_container_width=True)
 
+# ===== 中文欄位與數字格式（只改顯示，不修改原始 CSV） =====
+COLUMN_NAMES = {
+    "date": "日期", "stock_id": "股票代號", "stock_name": "股票名稱",
+    "close": "收盤價", "combined_rank": "綜合排名",
+    "fire_score": "FIRE 分數", "tdcc_score": "TDCC 分數",
+    "combined_score": "綜合分數", "breakout_status": "突破狀態",
+    "tdcc_trend": "籌碼趨勢", "tdcc_date": "TDCC 日期",
+    "signal": "技術訊號", "rank_score": "排名分數",
+    "rsi14": "RSI (14)", "ma10": "MA10", "ma20": "MA20",
+    "volume_ratio": "成交量倍數", "breakout_distance_pct": "突破距離 (%)",
+    "big_holder_pct": "大戶持股 (%)", "change_4w_pp": "近 4 週變化（百分點）",
+    "change_12w_pp": "近 12 週變化（百分點）", "trend": "籌碼趨勢",
+    "near_high_pct": "接近高點 (%)", "price_vs_ma10_pct": "相對 MA10 (%)",
+    "price_vs_ma20_pct": "相對 MA20 (%)", "period_count": "週數",
+    "fire_confirmations": "FIRE 確認數", "setup_confirmations": "SETUP 確認數",
+}
+VALUE_LABELS = {
+    "BREAKOUT": "突破", "FIRE": "FIRE", "SETUP": "SETUP",
+    "ACCUMULATING": "大戶增持", "DISTRIBUTING": "大戶減持",
+    "NEUTRAL": "籌碼持平",
+}
+
+def display_table(df):
+    shown = df.copy()
+    for col in ["breakout_status", "tdcc_trend", "trend", "signal"]:
+        if col in shown.columns:
+            shown[col] = shown[col].apply(
+                lambda x: VALUE_LABELS.get(str(x).strip().upper(), x) if pd.notna(x) else "—"
+            )
+    for col in shown.columns:
+        if col in {"date", "tdcc_date"}:
+            parsed = pd.to_datetime(shown[col], errors="coerce")
+            shown[col] = parsed.dt.strftime("%Y-%m-%d").where(parsed.notna(), shown[col])
+        elif col in {"stock_id", "stock_name"}:
+            shown[col] = shown[col].fillna("—").astype(str)
+        elif col in {"combined_rank", "period_count"}:
+            nums = pd.to_numeric(shown[col], errors="coerce")
+            shown[col] = nums.apply(lambda x: f"{int(x):,}" if pd.notna(x) else "—")
+        elif col in {"close", "fire_score", "tdcc_score", "combined_score", "rank_score", "rsi14", "ma10", "ma20", "volume_ratio", "breakout_distance_pct", "big_holder_pct", "change_4w_pp", "change_12w_pp"}:
+            nums = pd.to_numeric(shown[col], errors="coerce")
+            shown[col] = nums.apply(lambda x: f"{x:,.2f}" if pd.notna(x) else "—")
+    return shown.rename(columns=COLUMN_NAMES)
+
 st.markdown(
     """
     
 <style>
+/* ===== 台灣繁體中文字型與一致性 ===== */
+html, body, [class*="css"], .stApp, .stApp * {
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", "Heiti TC", sans-serif !important;
+}
+.stApp [data-testid="stCaptionContainer"] { color: #aebfda !important; }
+.stApp [data-testid="stMarkdownContainer"] { line-height: 1.65; }
 /* ===== 整體深色背景 ===== */
 .stApp {
     background: linear-gradient(
@@ -353,7 +402,7 @@ hr {
 )
 
 st.title("📈 Taiwan Stock Radar")
-st.caption("台股智慧選股與個股分析系統｜非即時行情")
+st.caption("台股智慧選股與個股分析系統｜技術趨勢 × TDCC 籌碼 × 規則式判讀｜非即時行情")
 
 prices = prepare_prices(read_csv(HISTORY_PATH))
 picks = read_csv(PICKS_PATH)
@@ -432,7 +481,7 @@ with tab1:
         ]
 
         st.dataframe(
-            picks[available],
+            display_table(picks[available]),
             use_container_width=True,
             hide_index=True,
         )
@@ -542,6 +591,14 @@ with tab2:
             "並非股價預測或買賣建議。"
         )
 
+        st.markdown("#### 🧭 多維度訊號概覽")
+        a, b, c, d = st.columns(4)
+        a.metric("技術訊號", fire_signal)
+        b.metric("籌碼方向", tdcc_direction)
+        a_note = "同向" if (fire_signal.upper() == "FIRE" and tdcc_direction == "大戶增持") else "待觀察"
+        c.metric("訊號一致性", a_note if fire_row is not None and tdcc_row is not None else "資料不足")
+        d.metric("資料來源", "FIRE / TDCC" if fire_row is not None and tdcc_row is not None else "部分缺漏")
+
     st.divider()
 
     # ===== 個股 FIRE 技術訊號 =====
@@ -636,7 +693,7 @@ with tab2:
 
             with st.expander("查看此股票的歷史技術訊號"):
                 st.dataframe(
-                    stock_signals[
+                    display_table(stock_signals[
                         [
                             "date",
                             "close",
@@ -645,7 +702,7 @@ with tab2:
                             "volume_ratio",
                             "rank_score",
                         ]
-                    ],
+                    ]),
                     use_container_width=True,
                     hide_index=True,
                 )
@@ -769,8 +826,8 @@ with tab2:
                     font=dict(color="#E2E8F0"),
                     height=320,
                     margin=dict(l=30, r=20, t=30, b=30),
-                    xaxis_title="比較期間",
-                    yaxis_title="持股比例變化（百分點）",
+                    xaxis_title=None,
+                    yaxis_title=None,
                     showlegend=False,
                 )
 
@@ -889,7 +946,7 @@ with tab2:
 
             with st.expander("查看 TDCC 分析資料"):
                 st.dataframe(
-                    stock_tdcc[
+                    display_table(stock_tdcc[
                         [
                             "date",
                             "big_holder_pct",
@@ -897,7 +954,7 @@ with tab2:
                             "change_12w_pp",
                             "trend",
                         ]
-                    ],
+                    ]),
                     use_container_width=True,
                     hide_index=True,
                 )
@@ -953,7 +1010,7 @@ with tab2:
                 latest["date"].strftime("%Y-%m-%d"),
             )
 
-            st.markdown("### K 線與均線")
+            st.markdown("### 📈 股價走勢與均線（有 OHLC 資料時顯示 K 線）")
             show_price_chart(stock_prices)
 
 
@@ -986,13 +1043,27 @@ with tab2:
                 if column in stock_indicators.columns
             }
 
-            st.dataframe(
-                pd.DataFrame(
-                    [indicator_data]
-                ),
-                use_container_width=True,
-                hide_index=True,
-            )
+            st.caption(f"最新指標日期：{latest_indicator.get('date', '—')}")
+            metric_fields = [
+                ("close", "最新收盤價", ""),
+                ("ma10", "10 日均線", ""),
+                ("ma20", "20 日均線", ""),
+                ("rsi14", "RSI (14)", ""),
+                ("volume_ratio", "成交量倍數", " 倍"),
+                ("breakout_distance_pct", "突破距離", "%"),
+            ]
+            available_metrics = [item for item in metric_fields if item[0] in latest_indicator.index]
+            for offset in range(0, len(available_metrics), 3):
+                metric_cols = st.columns(3)
+                for column, (field, label, suffix) in zip(metric_cols, available_metrics[offset:offset + 3]):
+                    value = pd.to_numeric(latest_indicator[field], errors="coerce")
+                    column.metric(label, f"{value:,.2f}{suffix}" if pd.notna(value) else "—")
+            with st.expander("查看技術指標原始資料"):
+                st.dataframe(
+                    display_table(pd.DataFrame([indicator_data])),
+                    use_container_width=True,
+                    hide_index=True,
+                )
         else:
             st.info("目前沒有這檔股票的技術指標紀錄。")
     else:
@@ -1012,7 +1083,7 @@ with tab3:
             )
 
         st.dataframe(
-            history,
+            display_table(history),
             use_container_width=True,
             hide_index=True,
         )
