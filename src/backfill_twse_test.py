@@ -16,7 +16,7 @@ START_DATE = date(2025, 10, 1)
 END_DATE = date.today()
 
 # 每次最多成功下載幾個交易日
-BATCH_SIZE = 25
+BATCH_SIZE = 50
 
 # 每次查詢後暫停秒數
 REQUEST_DELAY = 3
