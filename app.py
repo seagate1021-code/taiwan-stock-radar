@@ -159,6 +159,42 @@ def price_chart(rows):
             st.caption("每日成交量｜單位依原始 CSV 資料")
             st.plotly_chart(vf, use_container_width=True)
 
+    # RSI(14) 使用完整歷史收盤價計算，再依選定區間顯示，避免期間起點失真。
+    delta = p["close"].diff()
+    gains = delta.clip(lower=0)
+    losses = (-delta).clip(lower=0)
+    avg_gain = gains.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    avg_loss = losses.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    rs = avg_gain / avg_loss.replace(0, float("nan"))
+    rsi_values = 100 - (100 / (1 + rs))
+    rsi_values = rsi_values.mask((avg_loss == 0) & (avg_gain > 0), 100)
+    rsi_values = rsi_values.mask((avg_gain == 0) & (avg_loss > 0), 0)
+    rsi_values = rsi_values.mask((avg_gain == 0) & (avg_loss == 0), 50)
+    rsi_data = pd.DataFrame({"date": p["date"], "rsi": rsi_values}).dropna(subset=["rsi"])
+    st.markdown("##### RSI (14) 相對強弱指標")
+    if rsi_data.empty:
+        st.info("歷史收盤價不足 15 筆，暫時無法繪製 RSI(14) 走勢。")
+    else:
+        rf = go.Figure()
+        rf.add_trace(go.Scatter(
+            x=rsi_data["date"], y=rsi_data["rsi"], name="RSI (14)",
+            mode="lines", line=dict(color="#a78bfa", width=2.5),
+            hovertemplate="%{x|%Y-%m-%d}<br>RSI：%{y:.2f}<extra></extra>"
+        ))
+        for level, color, label in [(70, "#fb7185", "70 超買參考"),
+                                    (50, "#94a3b8", "50 中線"),
+                                    (30, "#34d399", "30 超賣參考")]:
+            rf.add_hline(y=level, line_dash="dash", line_width=1,
+                         line_color=color, annotation_text=label,
+                         annotation_position="top right",
+                         annotation_font_color=color)
+        chart_style(rf, 225)
+        rf.update_yaxes(range=[0, 100], dtick=20)
+        if start is not None:
+            rf.update_xaxes(range=[start, p["date"].max()])
+        st.plotly_chart(rf, use_container_width=True)
+        st.caption("RSI 依歷史收盤價以 Wilder 平滑方式計算；70／30 為常見觀察參考值，不代表必然反轉。")
+
 st.markdown("""
 <style>
 /* Taiwan Stock Radar v2.0 — design system */
@@ -258,7 +294,7 @@ chosen = st.sidebar.selectbox("今日精選股票", choices)
 stock_id = typed if chosen == "自行輸入" else chosen.split()[0]
 st.sidebar.divider()
 st.sidebar.caption("資料由 GitHub Actions 每日產生，非即時行情")
-st.sidebar.caption("v2.0 測試版｜選股策略及資料管線維持不變")
+st.sidebar.caption("v2.0 RSI 整合測試版｜選股策略及資料管線維持不變")
 
 st.markdown('<div class="radar-eyebrow">TAIWAN STOCK RADAR · RESEARCH TERMINAL</div>', unsafe_allow_html=True)
 st.title("📈 Taiwan Stock Radar")
@@ -409,4 +445,4 @@ with tab3:
         display_table(h)
 
 st.divider()
-st.caption("Taiwan Stock Radar v2.0 測試版｜僅供研究參考，不構成投資建議。")
+st.caption("Taiwan Stock Radar v2.0 RSI 整合測試版｜僅供研究參考，不構成投資建議。")
