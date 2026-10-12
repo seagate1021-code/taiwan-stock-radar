@@ -168,8 +168,8 @@ def main():
 
     collected = []
 
-    # 今天的行情可能尚未公布，因此先抓到昨天
-    for offset in range(1, BACKFILL_DAYS + 1):
+    # 包含今天；若當日行情尚未公布，API 無資料時會略過
+        for offset in range(0, BACKFILL_DAYS + 1):
         target_date = today - timedelta(days=offset)
 
         if target_date.weekday() >= 5:
