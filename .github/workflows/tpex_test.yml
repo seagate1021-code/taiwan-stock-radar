@@ -1,0 +1,37 @@
+
+name: TPEx Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-tpex:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install pandas requests
+
+      - name: Test TPEx daily quotes
+        run: |
+          python src/tpex.py
+
+      - name: Upload test CSV
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tpex-test-result
+          path: data/reports/tpex_latest.csv
+          if-no-files-found: error
