@@ -23,7 +23,7 @@ from indicators import calculate_one_stock
 HISTORY_PATH = Path("data/history/tpex_daily.csv")
 CONFIG_PATH = Path("config/strategy.yaml")
 OUTPUT_PATH = Path(
-    "data/reports/tpex_technical_indicators.csv"
+    "data/history/tpex_technical_indicators.csv"
 )
 
 REQUIRED_COLUMNS = [
