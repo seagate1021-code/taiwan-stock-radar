@@ -36,6 +36,5 @@ jobs:
           name: tpex-history-indicators-test
           path: |
             data/history/tpex_daily.csv
-            data/history/tpex_technical_indicators.csv
           if-no-files-found: error
     
