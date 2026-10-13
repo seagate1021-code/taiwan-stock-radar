@@ -28,6 +28,10 @@ jobs:
       - name: Build TPEx history
         run: |
           python src/tpex_history.py
+
+      - name: Calculate TPEx indicators
+        run: |
+          python src/tpex_indicators.py
           
       - name: Commit updated TPEx history
         run: |
